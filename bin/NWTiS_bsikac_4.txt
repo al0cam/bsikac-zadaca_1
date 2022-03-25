@@ -1,0 +1,13 @@
+#NWTiS 2022.
+#Tue Mar 09 15:22:47 CET 2022
+port=8003
+maks.cekaca=10
+maks.cekanje=1000
+datoteka.korisnika=aerodromi.csv
+datoteka.meduspremnika=meduspremnik.bin
+server.meteo.adresa=localhost
+server.meteo.port=8000
+server.aerodroma.adresa=localhost
+server.aerodroma.port=8001
+server.udaljenosti.adresa=localhost
+server.udaljenosti.port=8002

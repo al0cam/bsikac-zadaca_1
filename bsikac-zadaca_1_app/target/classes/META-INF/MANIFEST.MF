@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Build-Jdk-Spec: 17
+Class-Path: libs/bsikac-zadaca_1_lib-1.0.1.jar libs/gson-2.9.0.jar libs/
+ lombok-1.18.22.jar
+Main-Class: org.foi.nwtis.{LDAP_korisnik}.zadaca_1.ServerGlavni
+Created-By: Maven Integration for Eclipse
+
