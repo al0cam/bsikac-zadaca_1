@@ -23,7 +23,7 @@ import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.Konfiguracija;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.KonfiguracijaApstraktna;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.NeispravnaKonfiguracija;
 
-public class ServerMeteo {
+public class ServerAerodroma {
 	private int port = 0;
 	private int maksCekaca = -1;
 	private Socket veza = null;
@@ -57,14 +57,14 @@ public class ServerMeteo {
 		int maksCekaca = Integer.parseInt(konfig.dajPostavku("maks.cekaca"));
 		String nazivDatotekeMeteoPodataka = konfig.dajPostavku("datoteka.meteo");
 		
-		ServerMeteo sm = new ServerMeteo(port, maksCekaca);
+		ServerAerodroma sm = new ServerAerodroma(port, maksCekaca);
 		if(!sm.ucitajMeteoPodatke(nazivDatotekeMeteoPodataka)) return;
 		
 		System.out.println("Server se podiže na portu: "+port);
 		sm.obradaZahtjeva();
 	}
 
-	public ServerMeteo(int port, int maksCekaca) {
+	public ServerAerodroma(int port, int maksCekaca) {
 		this.port = port;
 		this.maksCekaca = maksCekaca;
 	}
@@ -142,59 +142,58 @@ public class ServerMeteo {
 			}
 
 		} catch (IOException ex) {
-			Logger.getLogger(ServerMeteo.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(ServerAerodroma.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
 	}
 
 	private String obradiNaredbu(String zahtjev) {
-		Pattern pMeteoIcao = Pattern.compile("^METEO ([A-Z]{4})$");
-		Pattern pMeteoIcaoDatum = Pattern.compile("^METEO ([A-Z]{4}) (\\d{4}-\\d{2}-\\d{2})$"); 
-		Pattern pTemp = Pattern.compile("^TEMP (\\d,\\d) (\\d,\\d)$");
-		Pattern pTempDatum = Pattern.compile("^TEMP (\\d,\\d) (\\d,\\d) (\\d{4}-\\d{2}-\\d{2})$");
+		Pattern pAero = Pattern.compile("^AIRPORT$");
+		Pattern pAeroIcao = Pattern.compile("^AIRPORT ([A-Z]{4})$");
+		Pattern pAeroIcaoBroj = Pattern.compile("^AIRPORT ([A-Z]{4}) (\\d{1,7})$");
 
-		//TODO isto za sve ostale
-		Matcher mMeteoIcao = pMeteoIcao.matcher(zahtjev);
-		Matcher mMeteoIcaoDatum = pMeteoIcaoDatum.matcher(zahtjev);
-		Matcher mTemp = pTemp.matcher(zahtjev);
-		Matcher mTempDatum = pTempDatum.matcher(zahtjev);
+		Matcher mAero = pAero.matcher(zahtjev);
+		Matcher mAeroIcao = pAeroIcao.matcher(zahtjev);
+		Matcher mAeroIcaoBroj = pAeroIcaoBroj.matcher(zahtjev);
 
-		//TODO isto za sve ostale
+		String odgovor = "ERROR 20 Format komande nije ispravan";
 		
-		//TODO provjeri kako mora biti prema opisu zadaće
-		String odgovor = "ERROR 10 Neispravna komanda!";
-		
-		if(mMeteoIcao.matches()) 
+		if(mAero.matches()) 
 		{
-			odgovor = izvrsiNaredbuMeteoIcao(zahtjev);
-		} else if(mMeteoIcaoDatum.matches()) {
-			odgovor = izvrsiNaredbuMeteoIcaoDatum(zahtjev);
+			odgovor = izvrsiNaredbuAero(zahtjev);
+		} else if(mAeroIcao.matches()) {
+			odgovor = izvrsiNaredbuAeroIcao(zahtjev);
 		}
-		else if(mTemp.matches())
+		else if(mAeroIcaoBroj.matches())
 		{
-			odgovor = izvrsiNaredbuTemp(zahtjev);
-		}
-		else if(mTempDatum.matches())
-		{
-			odgovor = izvrsiNaredbuTempDatum(zahtjev);
+			odgovor = izvrsiNaredbuAeroIcaoBroj(zahtjev);
 		}
 		
 		return odgovor;
 	}
 
-	private String izvrsiNaredbuMeteoIcao(String zahtjev) {
+	private String izvrsiNaredbuAero(String zahtjev) {
 		String[] podaci = zahtjev.split(" ");
 		String icao = podaci[1];
-		System.out.println(icao);
+		String popisRezultata = "";
 		for (AerodromMeteo am : meteoPodaci) {
-			//TODO pronađi zadnji
-			return "OK "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+";";
+			if(popisRezultata.length() <= 0)
+			{
+				popisRezultata = "OK "+am.icao+ ";";
+			}
+			else
+			{
+				popisRezultata = popisRezultata.concat(" "+am.icao +";");
+			}
+			
 		}
-		
-		return "ERROR 11 Aerodrom '"+icao+"' ne postoji!";
+		if(popisRezultata.length() <= 0)
+			popisRezultata = "ERROR 11 Aerodrom '"+icao+"' ne postoji!";
+			
+		return popisRezultata;
 	}
 	
-	private String izvrsiNaredbuMeteoIcaoDatum(String zahtjev) {
+	private String izvrsiNaredbuAeroIcao(String zahtjev) {
 		String[] podaci = zahtjev.split(" ");
 		String icao = podaci[1];
 		String datum = podaci[2];
@@ -220,7 +219,7 @@ public class ServerMeteo {
 //		return "ERROR 11 Aerodrom '"+icao+"' ne postoji!";//TODO provjeri opis zadaće
 	}
 	
-	private String izvrsiNaredbuTemp(String zahtjev) {
+	private String izvrsiNaredbuAeroIcaoBroj(String zahtjev) {
 		String[] podaci = zahtjev.split(" ");
 		double temp1 = Double.parseDouble(podaci[1].replace(',', '.'));
 		double temp2 = Double.parseDouble(podaci[2].replace(',', '.'));
@@ -246,32 +245,6 @@ public class ServerMeteo {
 	}
 	
 	
-	private String izvrsiNaredbuTempDatum(String zahtjev) {
-		String[] podaci = zahtjev.split(" ");
-		double temp1 = Double.parseDouble(podaci[1].replace(',', '.'));
-		double temp2 = Double.parseDouble(podaci[2].replace(',', '.'));
-		String datum = podaci[3];
-		String popisRezultata = "";
-		for (AerodromMeteo am : meteoPodaci) {
-			if(am.vrijeme.contains(datum) && am.temp >= temp1 && am.temp <= temp2 ) 
-			{
-				if(popisRezultata.length() <= 0)
-				{
-					popisRezultata = "OK "+am.icao+" "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+";";
-				}
-				else
-				{
-					popisRezultata = popisRezultata.concat(" "+am.icao+" "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+"; ");
-				}
-			}
-		}
-		if(popisRezultata.length() <= 0)
-			popisRezultata = "ERROR 11 ne postoje meteo podaci s temepraturom u"
-					+ " rasponu od '"+temp1+"' do '"+temp2+"' na datum '"+datum+"'!";
-			
-		return popisRezultata;
-//		return "ERROR 11 Aerodrom '"+icao+"' ne postoji!";//TODO provjeri opis zadaće
-	}
 	
 	
 	private static boolean konfiguracijaSadrzi(String kljuc)

@@ -13,7 +13,7 @@ public class KorisnikGlavni {
 		
 		
 		KorisnikGlavni korisnik = new KorisnikGlavni();
-		String odgovor = korisnik.posaljiKomandu("localhost", 8003, "METEO LDZA");
+		String odgovor = korisnik.posaljiKomandu("localhost", 8000, "TEMP 4,0 5,0 2021-01-17");
 		korisnik.ispis(odgovor);
 	}
     public String posaljiKomandu(String adresa, int port, String komanda) {
