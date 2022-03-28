@@ -162,7 +162,7 @@ public class ServerMeteo {
 		//TODO isto za sve ostale
 		
 		//TODO provjeri kako mora biti prema opisu zadaće
-		String odgovor = "ERROR 10 Neispravna komanda!";
+		String odgovor = "ERROR 10 Format komande nije ispravan";
 		
 		if(mMeteoIcao.matches()) 
 		{

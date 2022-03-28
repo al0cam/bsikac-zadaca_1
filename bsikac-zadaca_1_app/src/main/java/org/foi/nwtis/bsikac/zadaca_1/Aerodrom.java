@@ -9,22 +9,33 @@ import lombok.AllArgsConstructor;
  *
  * Klasa za aerodrom
  */
-@AllArgsConstructor()
+//@AllArgsConstructor()
 public class Aerodrom {
+    
+	@Getter
+    @Setter 
+    @NonNull 
+    String icao;
     @Getter
     @Setter 
     @NonNull 
-    private String icao;
+    String naziv;
     @Getter
     @Setter 
     @NonNull 
-    private String naziv;
+    String gpsGS;
     @Getter
     @Setter 
     @NonNull 
-    private String gpsGS;
-    @Getter
-    @Setter 
-    @NonNull 
-    private String gpsGD;
-}
+    String gpsGD;
+	public Aerodrom(@NonNull String icao, @NonNull String naziv, @NonNull String gpsGS, @NonNull String gpsGD) {
+		super();
+		this.icao = icao;
+		this.naziv = naziv;
+		this.gpsGS = gpsGS;
+		this.gpsGD = gpsGD;
+	}
+	
+	
+    
+}	
