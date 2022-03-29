@@ -13,7 +13,7 @@ public class KorisnikGlavni {
 		
 		
 		KorisnikGlavni korisnik = new KorisnikGlavni();
-		String odgovor = korisnik.posaljiKomandu("localhost", 8001, "AIRPORT LDZA");
+		String odgovor = korisnik.posaljiKomandu("localhost", 8001, "AIRPORT");
 		korisnik.ispis(odgovor);
 	}
     public String posaljiKomandu(String adresa, int port, String komanda) {

@@ -43,4 +43,5 @@ public class AerodromMeteo implements Serializable {
 		this.vrijeme = vrijeme;
 		this.time = time;
 	}
+	
 }

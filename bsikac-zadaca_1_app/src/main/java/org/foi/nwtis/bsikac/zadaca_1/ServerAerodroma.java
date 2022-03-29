@@ -13,7 +13,9 @@ import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -29,10 +31,12 @@ public class ServerAerodroma {
 	private int maksCekanje = 0;
 	private String serverUdaljenostiAdresa = "";
 	private int serverUdaljenostiPort = 0;
+	private ConcurrentHashMap<String, String> meduspremnik;
 	
 	private Socket veza = null;
 	private List<Aerodrom> aeroPodaci = new ArrayList<Aerodrom>();
 	
+//	TODO: remove isoDateFormat
 	private static SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private static Konfiguracija konfig = null;
 	
@@ -83,6 +87,7 @@ public class ServerAerodroma {
 		this.maksCekanje = maksCekanje;
 		this.serverUdaljenostiAdresa = serverUdaljenostiAdresa;
 		this.serverUdaljenostiPort = serverUdaljenostiPort;
+		this.meduspremnik = new ConcurrentHashMap<>();
 	}
 
 	private static boolean ucitajKonfiguraciju(String nazivDatoteke) {
@@ -127,12 +132,13 @@ public class ServerAerodroma {
 	}
 	
 	public void obradaZahtjeva() {
-
 		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca))
 		{		
 			while (true) {
 				System.out.println("Čekam korisnika!"); //TODO kasnije obrisati
 				this.veza = ss.accept();
+//				TODO: check function of timeout
+				this.veza.setSoTimeout(maksCekanje);
 				DretvaObrade dretvaObrade = new DretvaObrade(veza);
 				dretvaObrade.start();
 			}
@@ -171,19 +177,28 @@ public class ServerAerodroma {
 
 	private String izvrsiNaredbuAero(String zahtjev) {
 		String popisRezultata = "";
-		for (Aerodrom a : aeroPodaci) {
-			if(popisRezultata.length() <= 0)
-			{
-				popisRezultata = "OK "+a.icao+ ";";
+		if(meduspremnik.containsKey(zahtjev))
+		{
+			popisRezultata = meduspremnik.get(zahtjev);
+		}
+		else
+		{
+			for (Aerodrom a : aeroPodaci) {
+				if(popisRezultata.length() <= 0)
+				{
+					popisRezultata = "OK "+a.icao+ ";";
+				}
+				else
+				{
+					popisRezultata = popisRezultata.concat(" "+a.icao +";");
+				}
+				
 			}
-			else
-			{
-				popisRezultata = popisRezultata.concat(" "+a.icao +";");
-			}
-			
 		}
 		if(popisRezultata.length() <= 0)
 			popisRezultata = "ERROR 29 Nije pronaden niti jedan aerodrom!";
+		else
+			meduspremnik.putIfAbsent(zahtjev, popisRezultata);
 			
 		return popisRezultata;
 	}
@@ -192,23 +207,30 @@ public class ServerAerodroma {
 		String[] podaci = zahtjev.split(" ");
 		String icao = podaci[1];
 		String popisRezultata = "";
-		for (Aerodrom a : aeroPodaci) {
-			
-			if(a.icao.equals(icao)) 
-			{
-				if(popisRezultata.length() <= 0)
+		if(meduspremnik.containsKey(zahtjev))
+			popisRezultata = meduspremnik.get(zahtjev);
+		else 
+		{
+			for (Aerodrom a : aeroPodaci) {
+				
+				if(a.icao.equals(icao)) 
 				{
-					popisRezultata = "OK "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";";
-				}
-				else
-				{
-					popisRezultata = popisRezultata.concat(" "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";");
+					if(popisRezultata.length() <= 0)
+					{
+						popisRezultata = "OK "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";";
+					}
+					else
+					{
+						popisRezultata = popisRezultata.concat(" "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";");
+					}
 				}
 			}
 		}
 		if(popisRezultata.length() <= 0)
 			popisRezultata = "ERROR 21 Aerodrom '"+icao+"' ne postoji!";
-			
+		else
+			meduspremnik.putIfAbsent(zahtjev, popisRezultata);
+		
 		return popisRezultata;
 	}
 	
@@ -217,23 +239,30 @@ public class ServerAerodroma {
 		String icao = podaci[1];
 		String brojKm = podaci[2];
 		String popisRezultata = "";
-		for (Aerodrom a : aeroPodaci) {
-			
-			if(a.icao.equals(icao) ) 
-			{
-				if(popisRezultata.length() <= 0)
+		if(meduspremnik.containsKey(zahtjev))
+			popisRezultata = meduspremnik.get(zahtjev);
+		else
+		{
+			for (Aerodrom a : aeroPodaci) {
+				
+				if(a.icao.equals(icao) ) 
 				{
-					popisRezultata = "OK "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";";
-				}
-				else
-				{
-					popisRezultata = popisRezultata.concat(" "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";");
+					if(popisRezultata.length() <= 0)
+					{
+						popisRezultata = "OK "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";";
+					}
+					else
+					{
+						popisRezultata = popisRezultata.concat(" "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";");
+					}
 				}
 			}
 		}
 		if(popisRezultata.length() <= 0)
 			popisRezultata = "ERROR 11 Aerodrom '"+icao+"' ne postoji!";
-			
+		else
+			meduspremnik.putIfAbsent(zahtjev, popisRezultata);
+		
 		return popisRezultata;
 	}
 	
@@ -241,7 +270,7 @@ public class ServerAerodroma {
 	{
 		if(konfig.dajPostavku(kljuc)==null || konfig.dajPostavku(kljuc).isEmpty())
 		{
-			System.out.println(kljuc+" nije definiran u konfiguraciji!");
+			System.out.println("ERROR 29 "+kljuc+" nije definiran u konfiguraciji!");
 			return false;
 		}
 		return true;
@@ -303,11 +332,11 @@ public class ServerAerodroma {
 				this.veza.shutdownInput();
 					
 				String odgovor = obradiNaredbu(tekst.toString()); 
-				Thread.sleep(10000);
+//				Thread.sleep(10000);
 				osw.write("Odgovor: "+odgovor);
 				osw.flush();
 				this.veza.shutdownOutput();
-			} catch (IOException | InterruptedException e) 
+			} catch (IOException e) 
 			{
 				e.printStackTrace();
 			}

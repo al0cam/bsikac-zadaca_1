@@ -34,7 +34,7 @@ public class ServerMeteo {
 	
 	public static void main(String[] args) {
 		if(args.length != 1) {
-			System.out.println("Parametar mora biti naziv konfiguracijske datoteke!");
+			System.out.println("ERROR 19 Parametar mora biti naziv konfiguracijske datoteke!");
 			return;
 		}
 	
@@ -49,7 +49,7 @@ public class ServerMeteo {
 		int port = Integer.parseInt(konfig.dajPostavku("port"));
 		if(port < 8000 || port > 9999)
 		{
-			System.out.println("Port: "+port+ " nije u dozvoljenom rasponu(8000-9999)");
+			System.out.println("ERROR 19 Port: "+port+ " nije u dozvoljenom rasponu(8000-9999)");
 			return;
 		}
 		if(!portSlobodan(port)) return;
@@ -74,7 +74,7 @@ public class ServerMeteo {
 			konfig = KonfiguracijaApstraktna.preuzmiKonfiguraciju(nazivDatoteke);
 		} catch (NeispravnaKonfiguracija e) {
 			// TODO Javi nešto pametno
-			System.out.println("Došlo je do pogreške prilikom učitavanja konfiguracije!");
+			System.out.println("ERROR 19 Došlo je do pogreške prilikom učitavanja konfiguracije!");
 			e.printStackTrace();
 			return false;
 		}
@@ -100,9 +100,9 @@ public class ServerMeteo {
 			System.out.println("Učitano " + meteoPodaci.size() + " meteo podataka!");
 		} catch (IOException | NumberFormatException | ParseException e) {
 			if(e.getMessage().contains("Permission denied"))
-				System.out.println("Nije omoguceno citanje datoteke u pravima pristupa!");
+				System.out.println("ERROR 19 Nije omoguceno citanje datoteke u pravima pristupa!");
 			else
-				System.out.println("Datoteka ne postoji!");
+				System.out.println("ERROR 19 Datoteka ne postoji!");
 			return false;
 		}		
 		return true;
@@ -132,11 +132,11 @@ public class ServerMeteo {
 					this.veza.shutdownInput();
 						
 					String odgovor = obradiNaredbu(tekst.toString()); 
-					Thread.sleep(10000);
+//					Thread.sleep(10000);
 					osw.write("Odgovor: "+odgovor);
 					osw.flush();
 					this.veza.shutdownOutput();
-				} catch (SocketException | InterruptedException e) {
+				} catch (SocketException e) {
 					e.printStackTrace();
 				}
 			}
@@ -188,7 +188,7 @@ public class ServerMeteo {
 		System.out.println(icao);
 		for (AerodromMeteo am : meteoPodaci) {
 			//TODO pronađi zadnji
-			return "OK "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+";";
+			return "OK "+zamjeniTockuSaZarezom(zaokruzi(am.temp))+" "+zamjeniTockuSaZarezom(am.vlaga)+" "+zamjeniTockuSaZarezom(am.tlak)+" "+am.vrijeme+";";
 		}
 		
 		return "ERROR 11 Aerodrom '"+icao+"' ne postoji!";
@@ -205,11 +205,11 @@ public class ServerMeteo {
 			{
 				if(popisRezultata.length() <= 0)
 				{
-					popisRezultata = "OK "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+";";
+					popisRezultata = "OK "+zamjeniTockuSaZarezom(zaokruzi(am.temp))+" "+zamjeniTockuSaZarezom(am.vlaga)+" "+zamjeniTockuSaZarezom(am.tlak)+" "+am.vrijeme+";";
 				}
 				else
 				{
-					popisRezultata = popisRezultata.concat(" "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+";");
+					popisRezultata = popisRezultata.concat(" "+zamjeniTockuSaZarezom(zaokruzi(am.temp))+" "+zamjeniTockuSaZarezom(am.vlaga)+" "+zamjeniTockuSaZarezom(am.tlak)+" "+am.vrijeme+";");
 				}
 			}
 		}
@@ -226,15 +226,15 @@ public class ServerMeteo {
 		double temp2 = Double.parseDouble(podaci[2].replace(',', '.'));
 		String popisRezultata = "";
 		for (AerodromMeteo am : meteoPodaci) {
-			if(am.temp >= temp1 && am.temp <= temp2) 
+			if(zaokruzi(am.temp) >= temp1 && zaokruzi(am.temp) <= temp2) 
 			{
 				if(popisRezultata.length() <= 0)
 				{
-					popisRezultata = "OK "+am.icao+" "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+";";
+					popisRezultata = "OK "+am.icao+" "+zamjeniTockuSaZarezom(zaokruzi(am.temp))+" "+zamjeniTockuSaZarezom(am.vlaga)+" "+zamjeniTockuSaZarezom(am.tlak)+" "+am.vrijeme+";";
 				}
 				else
 				{
-					popisRezultata = popisRezultata.concat(" "+am.icao+" "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+";");
+					popisRezultata = popisRezultata.concat(" "+am.icao+" "+zamjeniTockuSaZarezom(zaokruzi(am.temp))+" "+zamjeniTockuSaZarezom(am.vlaga)+" "+zamjeniTockuSaZarezom(am.tlak)+" "+am.vrijeme+";");
 				}
 			}
 		}
@@ -253,15 +253,15 @@ public class ServerMeteo {
 		String datum = podaci[3];
 		String popisRezultata = "";
 		for (AerodromMeteo am : meteoPodaci) {
-			if(am.vrijeme.contains(datum) && am.temp >= temp1 && am.temp <= temp2 ) 
+			if(am.vrijeme.contains(datum) && zaokruzi(am.temp) >= temp1 && zaokruzi(am.temp) <= temp2 ) 
 			{
 				if(popisRezultata.length() <= 0)
 				{
-					popisRezultata = "OK "+am.icao+" "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+";";
+					popisRezultata = "OK "+am.icao+" "+zamjeniTockuSaZarezom(zaokruzi(am.temp))+" "+zamjeniTockuSaZarezom(am.vlaga)+" "+zamjeniTockuSaZarezom(am.tlak)+" "+am.vrijeme+";";
 				}
 				else
 				{
-					popisRezultata = popisRezultata.concat(" "+am.icao+" "+am.temp+" "+am.vlaga+" "+am.tlak+" "+am.vrijeme+"; ");
+					popisRezultata = popisRezultata.concat(" "+am.icao+" "+zamjeniTockuSaZarezom(zaokruzi(am.temp))+" "+zamjeniTockuSaZarezom(am.vlaga)+" "+zamjeniTockuSaZarezom(am.tlak)+" "+am.vrijeme+"; ");
 				}
 			}
 		}
@@ -278,7 +278,7 @@ public class ServerMeteo {
 	{
 		if(konfig.dajPostavku(kljuc)==null || konfig.dajPostavku(kljuc).isEmpty())
 		{
-			System.out.println(kljuc+" nije definiran u konfiguraciji!");
+			System.out.println("ERROR 19 "+kljuc+" nije definiran u konfiguraciji!");
 			return false;
 		}
 		return true;
@@ -294,11 +294,21 @@ public class ServerMeteo {
 		} catch (IOException e ) {
 			// TODO Auto-generated catch block
 //			e.printStackTrace();
-			System.out.println("Port se vec koristi!");
+			System.out.println("ERROR 19 Port se vec koristi!");
 			return false;
 		}
 		return true;
 		
+	}
+	
+	private double zaokruzi(double broj)
+	{
+		return Math.round(broj*10.0)/10.0;
+	}
+	
+	private String zamjeniTockuSaZarezom(double broj)
+	{
+		return String.valueOf(broj).replace(".", ",");
 	}
 	
 	
