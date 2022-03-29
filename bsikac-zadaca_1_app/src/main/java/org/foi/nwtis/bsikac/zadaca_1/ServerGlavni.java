@@ -22,15 +22,54 @@ import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.Konfiguracija;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.KonfiguracijaApstraktna;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.NeispravnaKonfiguracija;
 
+// TODO: Auto-generated Javadoc
+/**
+ * Glavna klasa poslužitelja.
+ */
 public class ServerGlavni {
+	
+	/** Broj porta. */
 	private int port = 0;
+	
+	/** Maksimalni broj cekaca. */
 	private int maksCekaca = -1;
+	
+	/** Veza na mrežnu utičnicu. */
 	private Socket veza = null;
+	
+	/** Kolekcija korisnika. */
 	private List<Korisnik> korisnici = new ArrayList<Korisnik>();
 	
+	/** ISO format za datum. */
 	private static SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+	
+	/** Konfiguracijski podaci. */
 	private static Konfiguracija konfig = null;
 	
+	
+	/**
+	 * Vraća kolekciju korisnika.
+	 *
+	 * @return the korisnici
+	 */
+	public List<Korisnik> getKorisnici() {
+		return korisnici;
+	}
+
+	/**
+	 * Vraća konfiguraciju konfig.
+	 *
+	 * @return konfig
+	 */
+	public static Konfiguracija getKonfig() {
+		return konfig;
+	}
+
+	/**
+	 * Početna metoda.
+	 *
+	 * @param args argumenti.
+	 */
 	public static void main(String[] args) {
 		if(args.length != 1) {
 			System.out.println("Parametar mora biti naziv konfiguracijske datoteke!");
@@ -51,12 +90,24 @@ public class ServerGlavni {
 		sm.obradaZahtjeva();
 	}
 
+	/**
+	 * Konstruktor glavne klase.
+	 *
+	 * @param port broj porta
+	 * @param maksCekaca maksimalni broj cekaca.
+	 */
 	public ServerGlavni(int port, int maksCekaca) {
 		this.port = port;
 		this.maksCekaca = maksCekaca;
 	}
 	
-	private static boolean ucitajKonfiguraciju(String nazivDatoteke) {
+	/**
+	 * Ucitaj konfiguraciju.
+	 *
+	 * @param nazivDatoteke naziv datoteke
+	 * @return true, ako je uspješno
+	 */
+	public static boolean ucitajKonfiguraciju(String nazivDatoteke) {
 		try {
 			konfig = KonfiguracijaApstraktna.preuzmiKonfiguraciju(nazivDatoteke);
 		} catch (NeispravnaKonfiguracija e) {
@@ -67,7 +118,12 @@ public class ServerGlavni {
 		return true;
 	}
 		
-	private void ucitajKorisnike(String nazivDatotekeKorisnika) {
+	/**
+	 * Ucitaj korisnike.
+	 *
+	 * @param nazivDatotekeKorisnika naziv datoteke korisnika.
+	 */
+	public void ucitajKorisnike(String nazivDatotekeKorisnika) {
 		try {
 			
 			FileReader fr = new FileReader(nazivDatotekeKorisnika,Charset.forName("UTF-8"));
@@ -88,6 +144,9 @@ public class ServerGlavni {
 		}		
 	}
 
+	/**
+	 * Obrada zahtjeva.
+	 */
 	public void obradaZahtjeva() {
 
 		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca)) {			
@@ -103,7 +162,5 @@ public class ServerGlavni {
 		}
 
 	}
-
 	
-
 }

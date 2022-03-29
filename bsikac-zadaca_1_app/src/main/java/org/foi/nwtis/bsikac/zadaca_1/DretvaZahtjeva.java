@@ -45,11 +45,11 @@ public class DretvaZahtjeva extends Thread {
 			this.veza.shutdownInput();
 				
 			String odgovor = obradiNaredbu(tekst.toString()); 
-			sleep(10000);
-			osw.write("Odgovor: "+odgovor);
+//			sleep(10000);
+			osw.write(odgovor);
 			osw.flush();
 			this.veza.shutdownOutput();
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}

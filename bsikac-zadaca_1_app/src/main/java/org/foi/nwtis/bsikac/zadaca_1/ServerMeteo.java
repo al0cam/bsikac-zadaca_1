@@ -133,7 +133,7 @@ public class ServerMeteo {
 						
 					String odgovor = obradiNaredbu(tekst.toString()); 
 //					Thread.sleep(10000);
-					osw.write("Odgovor: "+odgovor);
+					osw.write(odgovor);
 					osw.flush();
 					this.veza.shutdownOutput();
 				} catch (SocketException e) {

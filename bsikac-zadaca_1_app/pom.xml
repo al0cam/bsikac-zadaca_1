@@ -12,7 +12,6 @@
 		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
 	<build>
-		<sourceDirectory>src</sourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

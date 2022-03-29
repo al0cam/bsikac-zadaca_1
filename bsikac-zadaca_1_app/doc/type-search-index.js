@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"org.foi.nwtis.bsikac.zadaca_1","l":"ServerGlavni"}];updateSearchResults();
