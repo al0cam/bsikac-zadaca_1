@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.foi.nwtis.bsikac</groupId>
-  <artifactId>bsikac-zadaca_1_app</artifactId>
-  <version>1.0.0</version>
-  <name>bsikac-zadaca_1_app</name>
-  
-  
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.foi.nwtis.bsikac</groupId>
+	<artifactId>bsikac-zadaca_1_app</artifactId>
+	<version>1.0.0</version>
+	<name>bsikac-zadaca_1_app</name>
+
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>17</maven.compiler.source>
@@ -66,31 +66,31 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 		</plugins>
 	</build>
-  
-  <dependencies>
-  
-  	<dependency>
-		<groupId>org.foi.nwtis.bsikac</groupId>
-		<artifactId>bsikac-zadaca_1_lib</artifactId>
-		<version>1.0.1</version>
-	</dependency>
 
-	<dependency>
-		<groupId>org.junit.jupiter</groupId>
-		<artifactId>junit-jupiter-engine</artifactId>
-		<version>5.8.2</version>
-		<scope>test</scope>
-	</dependency>
+	<dependencies>
 
-	<dependency>
-		<groupId>org.projectlombok</groupId>
-		<artifactId>lombok</artifactId>
-		<version>1.18.22</version>
-	</dependency>
-  </dependencies>
-  
-  
+		<dependency>
+			<groupId>org.foi.nwtis.bsikac</groupId>
+			<artifactId>bsikac-zadaca_1_lib</artifactId>
+			<version>1.0.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>5.8.2</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.22</version>
+		</dependency>
+	</dependencies>
+
+
 </project>

@@ -32,53 +32,61 @@ public class ServerAerodroma {
 	private String serverUdaljenostiAdresa = "";
 	private int serverUdaljenostiPort = 0;
 	private ConcurrentHashMap<String, String> meduspremnik;
-	
+
 	private Socket veza = null;
 	private List<Aerodrom> aeroPodaci = new ArrayList<Aerodrom>();
-	
+
 //	TODO: remove isoDateFormat
 	private static SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private static Konfiguracija konfig = null;
-	
+
 	public static void main(String[] args) {
-		if(args.length != 1) {
+		if (args.length != 1) {
 			System.out.println("Parametar mora biti naziv konfiguracijske datoteke!");
 			return;
 		}
-	
-		if(!ucitajKonfiguraciju(args[0])) return;
-		
-		//TODO provjeri jesu li sve postavke koje trebaju biti
-		if(!konfiguracijaSadrzi("port")) return;
-		if(!konfiguracijaSadrzi("maks.cekaca")) return;
-		if(!konfiguracijaSadrzi("maks.cekanje")) return;
-		if(!konfiguracijaSadrzi("datoteka.aerodroma")) return;
-		if(!konfiguracijaSadrzi("server.udaljenosti.port")) return;
-		if(!konfiguracijaSadrzi("server.udaljenosti.adresa")) return;
-			
-		
+
+		if (!ucitajKonfiguraciju(args[0]))
+			return;
+
+		// TODO provjeri jesu li sve postavke koje trebaju biti
+		if (!konfiguracijaSadrzi("port"))
+			return;
+		if (!konfiguracijaSadrzi("maks.cekaca"))
+			return;
+		if (!konfiguracijaSadrzi("maks.cekanje"))
+			return;
+		if (!konfiguracijaSadrzi("datoteka.aerodroma"))
+			return;
+		if (!konfiguracijaSadrzi("server.udaljenosti.port"))
+			return;
+		if (!konfiguracijaSadrzi("server.udaljenosti.adresa"))
+			return;
+
 		int port = Integer.parseInt(konfig.dajPostavku("port"));
-		if(port < 8000 || port > 9999)
-		{
-			System.out.println("Port: "+port+ " nije u dozvoljenom rasponu(8000-9999)");
+		if (port < 8000 || port > 9999) {
+			System.out.println("Port: " + port + " nije u dozvoljenom rasponu(8000-9999)");
 			return;
 		}
-		if(!portSlobodan(port)) return;
-		
+		if (!portSlobodan(port))
+			return;
+
 		int maksCekaca = Integer.parseInt(konfig.dajPostavku("maks.cekaca"));
 		String nazivDatotekeAeroPodataka = konfig.dajPostavku("datoteka.aerodroma");
 		System.out.println(nazivDatotekeAeroPodataka);
 		int maksCekanje = Integer.parseInt(konfig.dajPostavku("maks.cekanje"));
 		String serverUdaljenostiAdresa = konfig.dajPostavku("server.udaljenosti.adresa");
 		int serverUdaljenostiPort = Integer.parseInt(konfig.dajPostavku("server.udaljenosti.port"));
-		
-		ServerAerodroma sa = new ServerAerodroma(port, maksCekaca, maksCekanje, serverUdaljenostiAdresa, serverUdaljenostiPort);
-		if(!sa.ucitajAeroPodatke(nazivDatotekeAeroPodataka)) return;
-		
-		System.out.println("Server se podiže na portu: "+port);
+
+		ServerAerodroma sa = new ServerAerodroma(port, maksCekaca, maksCekanje, serverUdaljenostiAdresa,
+				serverUdaljenostiPort);
+		if (!sa.ucitajAeroPodatke(nazivDatotekeAeroPodataka))
+			return;
+
+		System.out.println("Server se podiže na portu: " + port);
 		sa.obradaZahtjeva();
 	}
-	
+
 	public ServerAerodroma(int port, int maksCekaca, int maksCekanje, String serverUdaljenostiAdresa,
 			int serverUdaljenostiPort) {
 		super();
@@ -101,41 +109,40 @@ public class ServerAerodroma {
 		}
 		return true;
 	}
-		
+
 	private boolean ucitajAeroPodatke(String nazivDatotekeAeroPodataka) {
 		try {
-			
-			FileReader fr = new FileReader(nazivDatotekeAeroPodataka,Charset.forName("UTF-8"));
+
+			FileReader fr = new FileReader(nazivDatotekeAeroPodataka, Charset.forName("UTF-8"));
 			BufferedReader br = new BufferedReader(fr);
-			while(true) {
+			while (true) {
 				String linija = br.readLine();
-				if(linija==null || linija.isEmpty()) break;
-				//TODO razmisli o mogućim problemima kod učitavanja
+				if (linija == null || linija.isEmpty())
+					break;
+				// TODO razmisli o mogućim problemima kod učitavanja
 				String[] p = linija.split(";");
-				Aerodrom a = new Aerodrom(p[0],p[1],p[2],p[3]);
+				Aerodrom a = new Aerodrom(p[0], p[1], p[2], p[3]);
 				aeroPodaci.add(a);
-				//System.out.println(linija);
+				// System.out.println(linija);
 			}
 			System.out.println("Učitano " + aeroPodaci.size() + " meteo podataka!");
 			br.close();
 		} catch (IOException | NumberFormatException e) {
-			if(e.getMessage().contains("Permission denied"))
-				System.out.println("Nije omoguceno citanje datoteke u pravima pristupa!");
-			else
-			{
-				System.out.println("Datoteka ne postoji!");
+			if (e.getMessage().contains("Permission denied"))
+				System.out.println("ERROR 29 Nije omoguceno citanje datoteke u pravima pristupa!");
+			else {
+				System.out.println("ERROR 29 Datoteka ne postoji!");
 				e.printStackTrace();
 			}
 			return false;
-		}		
+		}
 		return true;
 	}
-	
+
 	public void obradaZahtjeva() {
-		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca))
-		{		
+		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca)) {
 			while (true) {
-				System.out.println("Čekam korisnika!"); //TODO kasnije obrisati
+				System.out.println("Čekam korisnika!"); // TODO kasnije obrisati
 				this.veza = ss.accept();
 //				TODO: check function of timeout
 				this.veza.setSoTimeout(maksCekanje);
@@ -143,8 +150,7 @@ public class ServerAerodroma {
 				dretvaObrade.start();
 			}
 
-		} catch (IOException ex) 
-		{
+		} catch (IOException ex) {
 			Logger.getLogger(ServerAerodroma.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
@@ -160,142 +166,145 @@ public class ServerAerodroma {
 		Matcher mAeroIcaoBroj = pAeroIcaoBroj.matcher(zahtjev);
 
 		String odgovor = "ERROR 20 Format komande nije ispravan";
-		
-		if(mAero.matches()) 
-		{
+
+		if (mAero.matches()) {
 			odgovor = izvrsiNaredbuAero(zahtjev);
-		} else if(mAeroIcao.matches()) {
+		} else if (mAeroIcao.matches()) {
 			odgovor = izvrsiNaredbuAeroIcao(zahtjev);
-		}
-		else if(mAeroIcaoBroj.matches())
-		{
+		} else if (mAeroIcaoBroj.matches()) {
 			odgovor = izvrsiNaredbuAeroIcaoBroj(zahtjev);
 		}
-		
+
 		return odgovor;
 	}
 
 	private String izvrsiNaredbuAero(String zahtjev) {
 		String popisRezultata = "";
-		if(meduspremnik.containsKey(zahtjev))
-		{
+		if (meduspremnik.containsKey(zahtjev)) {
 			popisRezultata = meduspremnik.get(zahtjev);
-		}
-		else
-		{
+		} else {
 			for (Aerodrom a : aeroPodaci) {
-				if(popisRezultata.length() <= 0)
-				{
-					popisRezultata = "OK "+a.icao+ ";";
+				if (popisRezultata.length() <= 0) {
+					popisRezultata = "OK " + a.icao + ";";
+				} else {
+					popisRezultata = popisRezultata.concat(" " + a.icao + ";");
 				}
-				else
-				{
-					popisRezultata = popisRezultata.concat(" "+a.icao +";");
-				}
-				
+
 			}
 		}
-		if(popisRezultata.length() <= 0)
+		if (popisRezultata.length() <= 0)
 			popisRezultata = "ERROR 29 Nije pronaden niti jedan aerodrom!";
 		else
 			meduspremnik.putIfAbsent(zahtjev, popisRezultata);
-			
+
 		return popisRezultata;
 	}
-	
+
 	private String izvrsiNaredbuAeroIcao(String zahtjev) {
 		String[] podaci = zahtjev.split(" ");
 		String icao = podaci[1];
 		String popisRezultata = "";
-		if(meduspremnik.containsKey(zahtjev))
+		if (meduspremnik.containsKey(zahtjev))
 			popisRezultata = meduspremnik.get(zahtjev);
-		else 
-		{
+		else {
 			for (Aerodrom a : aeroPodaci) {
-				
-				if(a.icao.equals(icao)) 
-				{
-					if(popisRezultata.length() <= 0)
-					{
-						popisRezultata = "OK "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";";
-					}
-					else
-					{
-						popisRezultata = popisRezultata.concat(" "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";");
+
+				if (a.icao.equals(icao)) {
+					if (popisRezultata.length() <= 0) {
+						popisRezultata = "OK " + a.icao + " " + a.naziv + " " + a.gpsGS + " " + a.gpsGD + ";";
+					} else {
+						popisRezultata = popisRezultata
+								.concat(" " + a.icao + " " + a.naziv + " " + a.gpsGS + " " + a.gpsGD + ";");
 					}
 				}
 			}
 		}
-		if(popisRezultata.length() <= 0)
-			popisRezultata = "ERROR 21 Aerodrom '"+icao+"' ne postoji!";
+		if (popisRezultata.length() <= 0)
+			popisRezultata = "ERROR 21 Aerodrom '" + icao + "' ne postoji!";
 		else
 			meduspremnik.putIfAbsent(zahtjev, popisRezultata);
-		
+
 		return popisRezultata;
 	}
-	
+
 	private String izvrsiNaredbuAeroIcaoBroj(String zahtjev) {
 		String[] podaci = zahtjev.split(" ");
 		String icao = podaci[1];
-		String brojKm = podaci[2];
-		String popisRezultata = "";
-		if(meduspremnik.containsKey(zahtjev))
+		Double brojKm = Double.parseDouble(podaci[2]);
+		String popisRezultata = "OK";
+		if (meduspremnik.containsKey(zahtjev))
 			popisRezultata = meduspremnik.get(zahtjev);
-		else
-		{
+		else {
 			for (Aerodrom a : aeroPodaci) {
-				
-				if(a.icao.equals(icao) ) 
-				{
-					if(popisRezultata.length() <= 0)
-					{
-						popisRezultata = "OK "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";";
+				if (a.icao.equals(icao)) {
+					Socket vezaNaServerUdaljenosti;
+					try {
+						vezaNaServerUdaljenosti = new Socket(this.serverUdaljenostiAdresa, this.serverUdaljenostiPort);
+						for (Aerodrom a2 : aeroPodaci) {
+							String komanda = "DISTANCE " + a.icao + " " + a2.icao;
+							String odgovor;
+							while(true)
+							{
+//								odgovor = OK
+//								odgovor = AIRPORT 
+								odgovor = posaljiKomanduSDaljnjimCitanjem(komanda, vezaNaServerUdaljenosti);
+								String[] dijeloviOdgovora = odgovor.split(" ");
+								if (dijeloviOdgovora[0].contentEquals("OK")){
+									if(Double.parseDouble(dijeloviOdgovora[1]) <= brojKm)
+									{
+										popisRezultata = popisRezultata.concat(" " + a.icao + dijeloviOdgovora[1] + ";");
+									}
+									break;
+								}
+								else if (dijeloviOdgovora[0].equals("AIRPORT"))
+								{
+//									sprema u komandu OK icao icao.ime ... sto se prilikom sljedeceg pokretanja while petlje salje serveru udaljenosti
+									komanda = izvrsiNaredbuAeroIcao(odgovor);
+								}
+							}
+						}
+
+						vezaNaServerUdaljenosti.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-					else
-					{
-						popisRezultata = popisRezultata.concat(" "+a.icao+" "+a.naziv+" "+a.gpsGS+" "+a.gpsGD+";");
-					}
+
 				}
 			}
 		}
-		if(popisRezultata.length() <= 0)
-			popisRezultata = "ERROR 11 Aerodrom '"+icao+"' ne postoji!";
-		else
-			meduspremnik.putIfAbsent(zahtjev, popisRezultata);
-		
+		meduspremnik.putIfAbsent(zahtjev, popisRezultata);
+
 		return popisRezultata;
 	}
-	
-	private static boolean konfiguracijaSadrzi(String kljuc)
-	{
-		if(konfig.dajPostavku(kljuc)==null || konfig.dajPostavku(kljuc).isEmpty())
-		{
-			System.out.println("ERROR 29 "+kljuc+" nije definiran u konfiguraciji!");
+
+	private static boolean konfiguracijaSadrzi(String kljuc) {
+		if (konfig.dajPostavku(kljuc) == null || konfig.dajPostavku(kljuc).isEmpty()) {
+			System.out.println("ERROR 29 " + kljuc + " nije definiran u konfiguraciji!");
 			return false;
 		}
 		return true;
-		
+
 	}
-	
-	private static boolean portSlobodan(int port)
-	{
+
+	private static boolean portSlobodan(int port) {
 		ServerSocket skt;
 		try {
 			skt = new ServerSocket(port);
 			skt.close();
-		} catch (IOException e ) {
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 //			e.printStackTrace();
-			System.out.println("Port se vec koristi!");
+			System.out.println("ERROR 29 Port se vec koristi!");
 			return false;
 		}
 		return true;
-		
+
 	}
-	
-	public class DretvaObrade extends Thread
-	{
+
+	public class DretvaObrade extends Thread {
 		private Socket veza = null;
+		private Socket vezaSaUdaljenosti = null;
 
 		public DretvaObrade(Socket veza) {
 			super();
@@ -311,33 +320,23 @@ public class ServerAerodroma {
 		public void run() {
 			// TODO Auto-generated method stub
 			super.run();
-			System.out.println("Dretva: "+this.getId());
-			try (InputStreamReader isr = new InputStreamReader(this.veza.getInputStream(),
-					Charset.forName("UTF-8"));
+			try (InputStreamReader isr = new InputStreamReader(this.veza.getInputStream(), Charset.forName("UTF-8"));
 					OutputStreamWriter osw = new OutputStreamWriter(this.veza.getOutputStream(),
-							Charset.forName("UTF-8"));) 
-			{
+							Charset.forName("UTF-8"));) {
 
 				StringBuilder tekst = new StringBuilder();
-				while (true) 
-				{
-					int i = isr.read();
-					if (i == -1) {
-						break;
-					}
+				int i = isr.read();
+				while (i != -1)
 					tekst.append((char) i);
-				}
-				
-				System.out.println(tekst.toString()); //TODO kasnije obrisati
+
+				System.out.println(tekst.toString()); // TODO kasnije obrisati
 				this.veza.shutdownInput();
-					
-				String odgovor = obradiNaredbu(tekst.toString()); 
-//				Thread.sleep(10000);
-				osw.write("Odgovor: "+odgovor);
+
+				String odgovor = obradiNaredbu(tekst.toString());
+				osw.write(odgovor);
 				osw.flush();
 				this.veza.shutdownOutput();
-			} catch (IOException e) 
-			{
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
@@ -347,8 +346,30 @@ public class ServerAerodroma {
 			// TODO Auto-generated method stub
 			super.interrupt();
 		}
-		
-		
 	}
-	
+
+	public String posaljiKomanduSDaljnjimCitanjem(String komanda, Socket veza) {
+		try (InputStreamReader isr = new InputStreamReader(veza.getInputStream(), Charset.forName("UTF-8"));
+				OutputStreamWriter osw = new OutputStreamWriter(veza.getOutputStream(), Charset.forName("UTF-8"));) {
+
+			osw.write(komanda);
+			osw.flush();
+//			veza.shutdownOutput();
+			StringBuilder tekst = new StringBuilder();
+			int i = isr.read();
+			while (i != -1) {
+				i = isr.read();
+				tekst.append((char) i);
+			}
+//			veza.shutdownInput();
+
+			return tekst.toString();
+		} catch (SocketException e) {
+			System.out.println(e.getMessage());
+		} catch (IOException ex) {
+			System.out.println(ex.getMessage());
+		}
+		return null;
+	}
+
 }
