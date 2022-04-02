@@ -13,6 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -27,26 +28,34 @@ import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.NeispravnaKonfiguracija;
  * Glavna klasa poslužitelja.
  */
 public class ServerGlavni {
-	
+
 	/** Broj porta. */
 	private int port = 0;
-	
+
 	/** Maksimalni broj cekaca. */
-	private int maksCekaca = -1;
-	
+	public int maksCekaca = -1;
+	public int maksCekanje = 0;
+	public String serverUdaljenostiAdresa = "";
+	public int serverUdaljenostiPort = 0;
+	public String serverAerodromaAdresa = "";
+	public int serverAerodromaPort = 0;
+	public String serverMeteoAdresa = "";
+	public int serverMeteoPort = 0;
+	private ConcurrentHashMap<String, String> meduspremnik;
+	private int brojacDretvi = 0;
+
 	/** Veza na mrežnu utičnicu. */
 	private Socket veza = null;
-	
+
 	/** Kolekcija korisnika. */
 	private List<Korisnik> korisnici = new ArrayList<Korisnik>();
-	
+
 	/** ISO format za datum. */
 	private static SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-	
+
 	/** Konfiguracijski podaci. */
 	private static Konfiguracija konfig = null;
-	
-	
+
 	/**
 	 * Vraća kolekciju korisnika.
 	 *
@@ -71,21 +80,61 @@ public class ServerGlavni {
 	 * @param args argumenti.
 	 */
 	public static void main(String[] args) {
-		if(args.length != 1) {
+		if (args.length != 1) {
 			System.out.println("Parametar mora biti naziv konfiguracijske datoteke!");
 			return;
 		}
-	
-		if(!ucitajKonfiguraciju(args[0])) return;
-		
-		//TODO provjeri jesu li sve postavke koje trebaju biti
-		
+
+		if (!ucitajKonfiguraciju(args[0]))
+			return;
+		if (!konfiguracijaSadrzi("port"))
+			return;
+		if (!konfiguracijaSadrzi("maks.cekaca"))
+			return;
+		if (!konfiguracijaSadrzi("datoteka.meteo"))
+			return;
+		if (!konfiguracijaSadrzi("maks.cekanje"))
+			return;
+		if (!konfiguracijaSadrzi("datoteka.korisnika"))
+			return;
+		if (!konfiguracijaSadrzi("datoteka.meduspremnika"))
+			return;
+		if (!konfiguracijaSadrzi("server.aerodroma.port"))
+			return;
+		if (!konfiguracijaSadrzi("server.aerodroma.adresa"))
+			return;
+		if (!konfiguracijaSadrzi("server.udaljenosti.port"))
+			return;
+		if (!konfiguracijaSadrzi("server.udaljenosti.adresa"))
+			return;
+		if (!konfiguracijaSadrzi("server.meteo.port"))
+			return;
+		if (!konfiguracijaSadrzi("server.meteo.adresa"))
+			return;
+		// TODO provjeri jesu li sve postavke koje trebaju biti
+
 		int port = Integer.parseInt(konfig.dajPostavku("port"));
+		if (port < 8000 || port > 9999) {
+			System.out.println("ERROR 49 Port: " + port + " nije u dozvoljenom rasponu(8000-9999)");
+			return;
+		}
+		if (!portSlobodan(port))
+			return;
+
 		int maksCekaca = Integer.parseInt(konfig.dajPostavku("maks.cekaca"));
 		String nazivDatotekeKorisnika = konfig.dajPostavku("datoteka.korisnika");
-		System.out.println("Server se podiže na portu: "+port);
-		
-		ServerGlavni sm = new ServerGlavni(port,maksCekaca);
+		int maksCekanje = Integer.parseInt(konfig.dajPostavku("maks.cekanje"));
+		String serverUdaljenostiAdresa = konfig.dajPostavku("server.udaljenosti.adresa");
+		int serverUdaljenostiPort = Integer.parseInt(konfig.dajPostavku("server.udaljenosti.port"));
+		String serverAerodromaAdresa = konfig.dajPostavku("server.aerodroma.adresa");
+		int serverAerodromaPort = Integer.parseInt(konfig.dajPostavku("server.aerodroma.port"));
+		String serverMeteoAdresa = konfig.dajPostavku("server.meteo.adresa");
+		int serverMeteoPort = Integer.parseInt(konfig.dajPostavku("server.meteo.port"));
+
+		System.out.println("Server se podiže na portu: " + port);
+
+		ServerGlavni sm = new ServerGlavni(port, maksCekaca, maksCekanje, serverUdaljenostiAdresa,
+				serverUdaljenostiPort, serverAerodromaAdresa, serverAerodromaPort, serverMeteoAdresa, serverMeteoPort);
 		sm.ucitajKorisnike(nazivDatotekeKorisnika);
 		sm.obradaZahtjeva();
 	}
@@ -93,14 +142,29 @@ public class ServerGlavni {
 	/**
 	 * Konstruktor glavne klase.
 	 *
-	 * @param port broj porta
+	 * @param port       broj porta
 	 * @param maksCekaca maksimalni broj cekaca.
 	 */
 	public ServerGlavni(int port, int maksCekaca) {
 		this.port = port;
 		this.maksCekaca = maksCekaca;
 	}
-	
+
+	public ServerGlavni(int port, int maksCekaca, int maksCekanje, String serverUdaljenostiAdresa,
+			int serverUdaljenostiPort, String serverAerodromaAdresa, int serverAerodromaPort, String serverMeteoAdresa,
+			int serverMeteoPort) {
+		super();
+		this.port = port;
+		this.maksCekaca = maksCekaca;
+		this.maksCekanje = maksCekanje;
+		this.serverUdaljenostiAdresa = serverUdaljenostiAdresa;
+		this.serverUdaljenostiPort = serverUdaljenostiPort;
+		this.serverAerodromaAdresa = serverAerodromaAdresa;
+		this.serverAerodromaPort = serverAerodromaPort;
+		this.serverMeteoAdresa = serverAerodromaAdresa;
+		this.serverMeteoPort = serverAerodromaPort;
+	}
+
 	/**
 	 * Ucitaj konfiguraciju.
 	 *
@@ -117,7 +181,7 @@ public class ServerGlavni {
 		}
 		return true;
 	}
-		
+
 	/**
 	 * Ucitaj korisnike.
 	 *
@@ -125,35 +189,38 @@ public class ServerGlavni {
 	 */
 	public void ucitajKorisnike(String nazivDatotekeKorisnika) {
 		try {
-			
-			FileReader fr = new FileReader(nazivDatotekeKorisnika,Charset.forName("UTF-8"));
+
+			FileReader fr = new FileReader(nazivDatotekeKorisnika, Charset.forName("UTF-8"));
 			BufferedReader br = new BufferedReader(fr);
-			while(true) {
+			while (true) {
 				String linija = br.readLine();
-				if(linija==null || linija.isEmpty()) break;
-				//TODO razmisli o mogućim problemima kod učitavanja
+				if (linija == null || linija.isEmpty())
+					break;
+				// TODO razmisli o mogućim problemima kod učitavanja
 				String[] p = linija.split(";");
-				Korisnik k = new Korisnik(p[0],p[1],p[2],p[3]);
+				Korisnik k = new Korisnik(p[0], p[1], p[2], p[3]);
 				korisnici.add(k);
-				//System.out.println(linija);
+				// System.out.println(linija);
 			}
-			System.out.println("Učitano "+korisnici.size()+" korisnika!");
+			System.out.println("Učitano " + korisnici.size() + " korisnika!");
 		} catch (IOException | NumberFormatException e) {
 			// TODO Napiši nešto pametno
 			e.printStackTrace();
-		}		
+		}
 	}
 
 	/**
 	 * Obrada zahtjeva.
 	 */
 	public void obradaZahtjeva() {
-
-		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca)) {			
+		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca)) {
 			while (true) {
-				System.out.println("Čekam korisnika!"); //TODO kasnije obrisati
+				System.out.println("Čekam korisnika!"); // TODO kasnije obrisati
 				this.veza = ss.accept();
-				DretvaZahtjeva dretvaZahtjeva = new DretvaZahtjeva(veza, konfig);
+				DretvaZahtjeva dretvaZahtjeva = new DretvaZahtjeva(veza, konfig, brojacDretvi);
+
+				brojacDretvi += 1;
+				dretvaZahtjeva.postaviServerGlavni(this);
 				dretvaZahtjeva.start();
 			}
 
@@ -162,5 +229,28 @@ public class ServerGlavni {
 		}
 
 	}
-	
+
+	private static boolean konfiguracijaSadrzi(String kljuc) {
+		if (konfig.dajPostavku(kljuc) == null || konfig.dajPostavku(kljuc).isEmpty()) {
+			System.out.println("ERROR 49 " + kljuc + " nije definiran u konfiguraciji!");
+			return false;
+		}
+		return true;
+
+	}
+
+	private static boolean portSlobodan(int port) {
+		ServerSocket skt;
+		try {
+			skt = new ServerSocket(port);
+			skt.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			System.out.println("ERROR 49 Port se vec koristi!");
+			return false;
+		}
+		return true;
+
+	}
 }

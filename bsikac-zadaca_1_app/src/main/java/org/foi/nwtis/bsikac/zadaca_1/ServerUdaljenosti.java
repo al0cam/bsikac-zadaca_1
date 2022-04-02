@@ -71,18 +71,18 @@ public class ServerUdaljenosti {
 
 		int maksCekaca = Integer.parseInt(konfig.dajPostavku("maks.cekaca"));
 		int maksCekanje = Integer.parseInt(konfig.dajPostavku("maks.cekanje"));
-		String serverUdaljenostiAdresa = konfig.dajPostavku("server.aerodroma.adresa");
-		int serverUdaljenostiPort = Integer.parseInt(konfig.dajPostavku("server.aerodroma.port"));
+		String serverAerodromaAdresa = konfig.dajPostavku("server.aerodroma.adresa");
+		int serverAerodromaPort = Integer.parseInt(konfig.dajPostavku("server.aerodroma.port"));
 
-		ServerUdaljenosti su = new ServerUdaljenosti(port, maksCekaca, maksCekanje, serverUdaljenostiAdresa,
-				serverUdaljenostiPort);
+		ServerUdaljenosti su = new ServerUdaljenosti(port, maksCekaca, maksCekanje, serverAerodromaAdresa,
+				serverAerodromaPort);
 
 		System.out.println("Server se podiže na portu: " + port);
 		su.obradaZahtjeva();
 	}
 
-	public ServerUdaljenosti(int port, int maksCekaca, int maksCekanje, String serverUdaljenostiAdresa,
-			int serverUdaljenostiPort) {
+	public ServerUdaljenosti(int port, int maksCekaca, int maksCekanje, String serverAerodromaAdresa,
+			int serverAerodromaPort) {
 		super();
 		this.port = port;
 		this.maksCekaca = maksCekaca;
@@ -126,8 +126,7 @@ public class ServerUdaljenosti {
 		Pattern pDist = Pattern.compile("^DISTANCE ([A-Z]{4}) ([A-Z]{4})$"),
 				pDistClear = Pattern.compile("^DISTANCE CLEAR$");
 
-		Matcher mDist = pDist.matcher(zahtjev), 
-				mDistClear = pDistClear.matcher(zahtjev);
+		Matcher mDist = pDist.matcher(zahtjev), mDistClear = pDistClear.matcher(zahtjev);
 
 		String odgovor = "ERROR 30 Format komande nije ispravan";
 
@@ -152,28 +151,60 @@ public class ServerUdaljenosti {
 				aero2 = a;
 			}
 		}
-		if (aero1.equals(null))
-		{
-			aero1 = dohvatiAerodrom(icao1);
+		if (aero1 == null) {
+			String odgovor = dohvatiAerodrom(icao1);
+			if (odgovor == null)
+				popisRezultata.concat("ERROR 31 Aerodrom \'" + icao1 + "\' ne postoji!");
+			else
+			{
+				aero1 = stringUAerodrom(odgovor);
+				if(!aeroPodaci.contains(aero1))
+				{
+					aeroPodaci.add(aero1);
+				}
+			}
 		}
-		if (aero2.equals(null))
-		{
-			aero2 = dohvatiAerodrom(icao2);
+		if (aero2 == null) {
+			String odgovor = dohvatiAerodrom(icao2);
+			if (odgovor == null && popisRezultata.length() <= 0)
+				popisRezultata="ERROR 31 Aerodrom \'" + icao2 + "\' ne postoji";
+			else if (odgovor == null)
+				popisRezultata = ("ERROR 31 Aerodromi \'" + icao1 + "\' i \'" + icao2 + "\' ne postoje!");
+			else
+			{
+				aero2 = stringUAerodrom(odgovor);
+				if(!aeroPodaci.contains(aero2))
+				{
+					aeroPodaci.add(aero2);
+				}
+			}
+		}
+		if (popisRezultata.length() <= 0) {
+			popisRezultata = "OK " + udaljenostDvijeTockeNaSferi(aero1, aero2);
 		}
 
-			return popisRezultata;
+		return popisRezultata;
 	}
 
-	private Aerodrom dohvatiAerodrom(String icao) {
-		String komanda = "AIRPORT "+icao;
+	private String dohvatiAerodrom(String icao) {
+		Pattern pOk = Pattern.compile("^OK ([A-Z]{4}) (\".+\") (\\d{1,4}\\.\\d{1,4}) (\\d{1,6}\\.\\d{1,30});$"),
+				pError21 = Pattern.compile("^ERROR 21 Aerodrom '([A-Z]{4})' ne postoji!$");
+//		FIXAT REGEX JER NE PODRZAVA ž
+		String komanda = "AIRPORT " + icao;
 		String odgovor = posaljiKomanduAero(serverAerodromaAdresa, serverAerodromaPort, komanda);
-		String[] podaci = odgovor.split(" ");
-		if(podaci[0].equals("OK"))
-		{
-//			TODO: splirat string po necem drugom a ne spaceu jer mi space moze bit u nazivu isto RIP
-			return new Aerodrom(podaci[1], podaci[2], komanda, odgovor)
+		System.out.println("DOHVATI AERO: "+odgovor);
+		Matcher mOk = pOk.matcher(odgovor);
+
+		if (odgovor.contains("OK")) {
+			return odgovor;
 		}
 		return null;
+	}
+
+	private Aerodrom stringUAerodrom(String odgovor) {
+		String[] podaci = odgovor.split("\""), statusNaziv = podaci[0].split(" "), koordinate = podaci[2].split(" ");
+		String naziv = podaci[1];
+		return new Aerodrom(statusNaziv[1], naziv, koordinate[1], koordinate[2].replace(";", ""));
 	}
 
 	private String izvrsiNaredbuDistClear(String zahtjev) {
@@ -241,13 +272,13 @@ public class ServerUdaljenosti {
 				}
 
 				System.out.println(tekst.toString()); // TODO kasnije obrisati
-				this.veza.shutdownInput();
+//				this.veza.shutdownInput();
 
 				String odgovor = obradiNaredbu(tekst.toString());
 //				Thread.sleep(10000);
 				osw.write(odgovor);
 				osw.flush();
-				this.veza.shutdownOutput();
+//				this.veza.shutdownOutput();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -263,17 +294,19 @@ public class ServerUdaljenosti {
 
 	static double udaljenostDvijeTockeNaSferi(Aerodrom icao1, Aerodrom icao2) {
 // distance between latitudes and longitudes
-		double dLat = Math.toRadians(Double.parseDouble(icao2.gpsGS) - Double.parseDouble(icao1.gpsGS));
-		double dLon = Math.toRadians(Double.parseDouble(icao2.gpsGD) - Double.parseDouble(icao1.gpsGD));
+		
+		double dLat = Math.toRadians(Double.parseDouble(icao2.gpsGS.replace(",", ".")) - Double.parseDouble(icao1.gpsGS.replace(",", ".")));
+		double dLon = Math.toRadians(Double.parseDouble(icao2.gpsGD.replace(",", ".")) - Double.parseDouble(icao1.gpsGD.replace(",", ".")));
 
 // convert to radians
-		double gs1 = Math.toRadians(Double.parseDouble(icao1.gpsGS));
-		double gs2 = Math.toRadians(Double.parseDouble(icao2.gpsGS));
+		double gs1 = Math.toRadians(Double.parseDouble(icao1.gpsGS.replace(",", ".")));
+		double gs2 = Math.toRadians(Double.parseDouble(icao2.gpsGS.replace(",", ".")));
 
 // apply formulae
 		double a = Math.pow(Math.sin(dLat / 2), 2) + Math.pow(Math.sin(dLon / 2), 2) * Math.cos(gs1) * Math.cos(gs2);
 		double radiusZemlje = 6371;
 		double c = 2 * Math.asin(Math.sqrt(a));
+		System.out.println("rez: "+radiusZemlje * c);
 		return radiusZemlje * c;
 	}
 

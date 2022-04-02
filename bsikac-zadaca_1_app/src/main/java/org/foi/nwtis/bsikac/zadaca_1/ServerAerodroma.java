@@ -211,10 +211,10 @@ public class ServerAerodroma {
 
 				if (a.icao.equals(icao)) {
 					if (popisRezultata.length() <= 0) {
-						popisRezultata = "OK " + a.icao + " " + a.naziv + " " + a.gpsGS + " " + a.gpsGD + ";";
+						popisRezultata = "OK " + a.icao + " \"" + a.naziv + "\" " + a.gpsGS + " " + a.gpsGD + ";";
 					} else {
 						popisRezultata = popisRezultata
-								.concat(" " + a.icao + " " + a.naziv + " " + a.gpsGS + " " + a.gpsGD + ";");
+								.concat(" " + a.icao + " \"" + a.naziv + "\" " + a.gpsGS + " " + a.gpsGD + ";");
 					}
 				}
 			}
@@ -241,29 +241,31 @@ public class ServerAerodroma {
 					try {
 						vezaNaServerUdaljenosti = new Socket(this.serverUdaljenostiAdresa, this.serverUdaljenostiPort);
 						for (Aerodrom a2 : aeroPodaci) {
-							String komanda = "DISTANCE " + a.icao + " " + a2.icao;
-							String odgovor;
-							while(true)
-							{
-//								odgovor = OK
-//								odgovor = AIRPORT 
-								odgovor = posaljiKomanduSDaljnjimCitanjem(komanda, vezaNaServerUdaljenosti);
-								String[] dijeloviOdgovora = odgovor.split(" ");
-								if (dijeloviOdgovora[0].contentEquals("OK")){
-									if(Double.parseDouble(dijeloviOdgovora[1]) <= brojKm)
-									{
-										popisRezultata = popisRezultata.concat(" " + a.icao + dijeloviOdgovora[1] + ";");
+							if (!a2.equals(a)) {
+								String komanda = "DISTANCE " + a.icao + " " + a2.icao;
+								String odgovor;
+								while (true) {
+//									odgovor = OK
+//									odgovor = AIRPORT 
+									odgovor = posaljiKomanduSDaljnjimCitanjem(komanda, vezaNaServerUdaljenosti);
+									System.out.println("ODGOVOR: " + odgovor);
+									String[] dijeloviOdgovora = odgovor.split(" ");
+									if (dijeloviOdgovora[0].contentEquals("OK")) {
+										if (Double.parseDouble(dijeloviOdgovora[1]) <= brojKm) {
+											popisRezultata = popisRezultata
+													.concat(" " + a.icao + dijeloviOdgovora[1] + ";");
+										}
+										break;
+									} else if (dijeloviOdgovora[0].equals("AIRPORT")) {
+//										sprema u komandu OK icao icao.ime ... sto se prilikom sljedeceg pokretanja while petlje salje serveru udaljenosti
+										komanda = izvrsiNaredbuAeroIcao(odgovor);
 									}
-									break;
 								}
-								else if (dijeloviOdgovora[0].equals("AIRPORT"))
-								{
-//									sprema u komandu OK icao icao.ime ... sto se prilikom sljedeceg pokretanja while petlje salje serveru udaljenosti
-									komanda = izvrsiNaredbuAeroIcao(odgovor);
-								}
+
 							}
 						}
 
+						System.out.println("KILL");
 						vezaNaServerUdaljenosti.close();
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
@@ -284,7 +286,6 @@ public class ServerAerodroma {
 			return false;
 		}
 		return true;
-
 	}
 
 	private static boolean portSlobodan(int port) {
@@ -299,12 +300,10 @@ public class ServerAerodroma {
 			return false;
 		}
 		return true;
-
 	}
 
 	public class DretvaObrade extends Thread {
 		private Socket veza = null;
-		private Socket vezaSaUdaljenosti = null;
 
 		public DretvaObrade(Socket veza) {
 			super();
@@ -325,11 +324,15 @@ public class ServerAerodroma {
 							Charset.forName("UTF-8"));) {
 
 				StringBuilder tekst = new StringBuilder();
-				int i = isr.read();
-				while (i != -1)
+				while (true) {
+					int i = isr.read();
+					if (i == -1) {
+						break;
+					}
 					tekst.append((char) i);
+				}
 
-				System.out.println(tekst.toString()); // TODO kasnije obrisati
+				System.out.println("ZAHTJEV: " + tekst.toString()); // TODO kasnije obrisati
 				this.veza.shutdownInput();
 
 				String odgovor = obradiNaredbu(tekst.toString());
@@ -352,17 +355,20 @@ public class ServerAerodroma {
 		try (InputStreamReader isr = new InputStreamReader(veza.getInputStream(), Charset.forName("UTF-8"));
 				OutputStreamWriter osw = new OutputStreamWriter(veza.getOutputStream(), Charset.forName("UTF-8"));) {
 
+			System.out.println("BRUV");
+			veza.setSoTimeout(maksCekanje);
 			osw.write(komanda);
 			osw.flush();
 //			veza.shutdownOutput();
 			StringBuilder tekst = new StringBuilder();
-			int i = isr.read();
-			while (i != -1) {
-				i = isr.read();
+			while (true) {
+				int i = isr.read();
+				if (i == -1) {
+					break;
+				}
 				tekst.append((char) i);
 			}
 //			veza.shutdownInput();
-
 			return tekst.toString();
 		} catch (SocketException e) {
 			System.out.println(e.getMessage());
