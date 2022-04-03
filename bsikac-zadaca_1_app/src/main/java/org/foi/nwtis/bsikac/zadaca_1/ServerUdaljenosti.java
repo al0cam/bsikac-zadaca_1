@@ -180,7 +180,7 @@ public class ServerUdaljenosti {
 			}
 		}
 		if (popisRezultata.length() <= 0) {
-			popisRezultata = "OK " + udaljenostDvijeTockeNaSferi(aero1, aero2);
+			popisRezultata = "OK " + (int) udaljenostDvijeTockeNaSferi(aero1, aero2);
 		}
 
 		return popisRezultata;
@@ -191,11 +191,11 @@ public class ServerUdaljenosti {
 				pError21 = Pattern.compile("^ERROR 21 Aerodrom '([A-Z]{4})' ne postoji!$");
 //		FIXAT REGEX JER NE PODRZAVA ž
 		String komanda = "AIRPORT " + icao;
-		String odgovor = posaljiKomanduAero(serverAerodromaAdresa, serverAerodromaPort, komanda);
+		String odgovor = posaljiKomandu(serverAerodromaAdresa, serverAerodromaPort, komanda);
 		System.out.println("DOHVATI AERO: "+odgovor);
-		Matcher mOk = pOk.matcher(odgovor);
+//		Matcher mOk = pOk.matcher(odgovor);
 
-		if (odgovor.contains("OK")) {
+		if (odgovor!=null && odgovor.contains("OK")) {
 			return odgovor;
 		}
 		return null;
@@ -307,10 +307,11 @@ public class ServerUdaljenosti {
 		double radiusZemlje = 6371;
 		double c = 2 * Math.asin(Math.sqrt(a));
 		System.out.println("rez: "+radiusZemlje * c);
-		return radiusZemlje * c;
+		System.out.println(zaokruzi(radiusZemlje * c));
+		return zaokruzi(radiusZemlje * c);
 	}
 
-	public String posaljiKomanduAero(String adresa, int port, String komanda) {
+	public String posaljiKomandu(String adresa, int port, String komanda) {
 		try (Socket veza = new Socket(adresa, port);
 				InputStreamReader isr = new InputStreamReader(veza.getInputStream(), Charset.forName("UTF-8"));
 				OutputStreamWriter osw = new OutputStreamWriter(veza.getOutputStream(), Charset.forName("UTF-8"));) {
@@ -330,11 +331,21 @@ public class ServerUdaljenosti {
 			veza.close();
 			return tekst.toString();
 		} catch (SocketException e) {
-			System.out.println(e.getMessage());
+			ispis(e.getMessage());
 		} catch (IOException ex) {
-			System.out.println(ex.getMessage());
+			ispis(ex.getMessage());
 		}
 		return null;
 	}
+
+	private void ispis(String message) {
+		System.out.println(message);
+	}
+	
+	private static double zaokruzi(double broj)
+	{
+		return Math.round(broj);
+	}
+	
 
 }

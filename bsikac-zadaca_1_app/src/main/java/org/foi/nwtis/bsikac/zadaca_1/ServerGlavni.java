@@ -41,7 +41,7 @@ public class ServerGlavni {
 	public int serverAerodromaPort = 0;
 	public String serverMeteoAdresa = "";
 	public int serverMeteoPort = 0;
-	private ConcurrentHashMap<String, String> meduspremnik;
+	public volatile Meduspremnik meduspremnik;
 	private int brojacDretvi = 0;
 
 	/** Veza na mrežnu utičnicu. */
@@ -90,8 +90,6 @@ public class ServerGlavni {
 		if (!konfiguracijaSadrzi("port"))
 			return;
 		if (!konfiguracijaSadrzi("maks.cekaca"))
-			return;
-		if (!konfiguracijaSadrzi("datoteka.meteo"))
 			return;
 		if (!konfiguracijaSadrzi("maks.cekanje"))
 			return;
@@ -161,8 +159,9 @@ public class ServerGlavni {
 		this.serverUdaljenostiPort = serverUdaljenostiPort;
 		this.serverAerodromaAdresa = serverAerodromaAdresa;
 		this.serverAerodromaPort = serverAerodromaPort;
-		this.serverMeteoAdresa = serverAerodromaAdresa;
-		this.serverMeteoPort = serverAerodromaPort;
+		this.serverMeteoAdresa = serverMeteoAdresa;
+		this.serverMeteoPort = serverMeteoPort;
+		this.meduspremnik = new Meduspremnik();
 	}
 
 	/**

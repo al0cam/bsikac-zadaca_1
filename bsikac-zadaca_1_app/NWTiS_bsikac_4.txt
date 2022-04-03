@@ -3,7 +3,7 @@
 port=8003
 maks.cekaca=10
 maks.cekanje=1000
-datoteka.korisnika=aerodromi.csv
+datoteka.korisnika=korisnici.csv
 datoteka.meduspremnika=meduspremnik.bin
 server.meteo.adresa=localhost
 server.meteo.port=8000

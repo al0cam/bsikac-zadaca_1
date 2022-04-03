@@ -231,45 +231,24 @@ public class ServerAerodroma {
 		String[] podaci = zahtjev.split(" ");
 		String icao = podaci[1];
 		Double brojKm = Double.parseDouble(podaci[2]);
-		String popisRezultata = "OK";
+		String popisRezultata = "OK ";
 		if (meduspremnik.containsKey(zahtjev))
 			popisRezultata = meduspremnik.get(zahtjev);
 		else {
 			for (Aerodrom a : aeroPodaci) {
 				if (a.icao.equals(icao)) {
-					Socket vezaNaServerUdaljenosti;
-					try {
-						vezaNaServerUdaljenosti = new Socket(this.serverUdaljenostiAdresa, this.serverUdaljenostiPort);
-						for (Aerodrom a2 : aeroPodaci) {
-							if (!a2.equals(a)) {
-								String komanda = "DISTANCE " + a.icao + " " + a2.icao;
-								String odgovor;
-								while (true) {
-//									odgovor = OK
-//									odgovor = AIRPORT 
-									odgovor = posaljiKomanduSDaljnjimCitanjem(komanda, vezaNaServerUdaljenosti);
-									System.out.println("ODGOVOR: " + odgovor);
-									String[] dijeloviOdgovora = odgovor.split(" ");
-									if (dijeloviOdgovora[0].contentEquals("OK")) {
-										if (Double.parseDouble(dijeloviOdgovora[1]) <= brojKm) {
-											popisRezultata = popisRezultata
-													.concat(" " + a.icao + dijeloviOdgovora[1] + ";");
-										}
-										break;
-									} else if (dijeloviOdgovora[0].equals("AIRPORT")) {
-//										sprema u komandu OK icao icao.ime ... sto se prilikom sljedeceg pokretanja while petlje salje serveru udaljenosti
-										komanda = izvrsiNaredbuAeroIcao(odgovor);
-									}
+					for (Aerodrom a2 : aeroPodaci) {
+						if (!a2.equals(a)) {
+							String komanda = "DISTANCE " + a.icao + " " + a2.icao;
+							String odgovor = posaljiKomandu(serverUdaljenostiAdresa, serverUdaljenostiPort, komanda);
+							String[] dijeloviOdgovora = odgovor.split(" ");
+							if (dijeloviOdgovora[0].contentEquals("OK")) {
+								if (Double.parseDouble(dijeloviOdgovora[1]) <= brojKm) {
+									popisRezultata = popisRezultata
+											.concat(" " + a2.icao+" " + dijeloviOdgovora[1] + ";");
 								}
-
 							}
 						}
-
-						System.out.println("KILL");
-						vezaNaServerUdaljenosti.close();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
 					}
 
 				}
@@ -351,15 +330,14 @@ public class ServerAerodroma {
 		}
 	}
 
-	public String posaljiKomanduSDaljnjimCitanjem(String komanda, Socket veza) {
-		try (InputStreamReader isr = new InputStreamReader(veza.getInputStream(), Charset.forName("UTF-8"));
+	public String posaljiKomandu(String adresa, int port, String komanda) {
+		try (Socket veza = new Socket(adresa, port);
+				InputStreamReader isr = new InputStreamReader(veza.getInputStream(), Charset.forName("UTF-8"));
 				OutputStreamWriter osw = new OutputStreamWriter(veza.getOutputStream(), Charset.forName("UTF-8"));) {
 
-			System.out.println("BRUV");
-			veza.setSoTimeout(maksCekanje);
 			osw.write(komanda);
 			osw.flush();
-//			veza.shutdownOutput();
+			veza.shutdownOutput();
 			StringBuilder tekst = new StringBuilder();
 			while (true) {
 				int i = isr.read();
@@ -368,14 +346,20 @@ public class ServerAerodroma {
 				}
 				tekst.append((char) i);
 			}
-//			veza.shutdownInput();
+			veza.shutdownInput();
+			veza.close();
 			return tekst.toString();
 		} catch (SocketException e) {
-			System.out.println(e.getMessage());
+			ispis(e.getMessage());
 		} catch (IOException ex) {
-			System.out.println(ex.getMessage());
+			ispis(ex.getMessage());
 		}
 		return null;
 	}
 
+	private void ispis(String message) {
+		System.out.println(message);
+	}
+
+	
 }
