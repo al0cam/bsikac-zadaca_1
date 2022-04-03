@@ -25,31 +25,52 @@ import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.Konfiguracija;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.KonfiguracijaApstraktna;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.NeispravnaKonfiguracija;
 
+/**
+ * Klasa ServerUdaljenosti.
+ */
 public class ServerUdaljenosti {
+	
+	/** Broj porta. */
 	private int port = 0;
+	
+	/** Maksimalni broj cekaca. */
 	private int maksCekaca = -1;
+
+	/** Maksimalno cekanje na odgovor od servera. */
 	private int maksCekanje = 0;
+	
+	/** Adresa servera aerodroma. */
 	private String serverAerodromaAdresa = "";
+	
+	/** Port servera aerodroma. */
 	private int serverAerodromaPort = 0;
+	
+	/** Lokalni meduspremnik. */
 	private ConcurrentHashMap<String, String> meduspremnik;
+	
+	/** Podaci o aerodromima. */
 	private ArrayList<Aerodrom> aeroPodaci;
 
+	/** Veza na mrežnu utičnicu. */
 	private Socket veza = null;
 
-//	TODO: remove isoDateFormat
-	private static SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+	/** Konfiguracijski podaci. */
 	private static Konfiguracija konfig = null;
 
+	/**
+	 * Početna metoda.
+	 *
+	 * @param args the argumenti
+	 */
 	public static void main(String[] args) {
 		if (args.length != 1) {
-			System.out.println("Parametar mora biti naziv konfiguracijske datoteke!");
+			System.out.println("ERROR 39 Parametar mora biti naziv konfiguracijske datoteke!");
 			return;
 		}
 
 		if (!ucitajKonfiguraciju(args[0]))
 			return;
 
-		// TODO provjeri jesu li sve postavke koje trebaju biti
 		if (!konfiguracijaSadrzi("port"))
 			return;
 		if (!konfiguracijaSadrzi("maks.cekaca"))
@@ -63,7 +84,7 @@ public class ServerUdaljenosti {
 
 		int port = Integer.parseInt(konfig.dajPostavku("port"));
 		if (port < 8000 || port > 9999) {
-			System.out.println("Port: " + port + " nije u dozvoljenom rasponu(8000-9999)");
+			System.out.println("ERROR 39 Port: " + port + " nije u dozvoljenom rasponu(8000-9999)");
 			return;
 		}
 		if (!portSlobodan(port))
@@ -81,6 +102,15 @@ public class ServerUdaljenosti {
 		su.obradaZahtjeva();
 	}
 
+	/**
+	 * Konstruktor klase serverUdaljenosti.
+	 *
+	 * @param port 						broj porta.
+	 * @param maksCekaca 				maksimalni broj cekaca.
+	 * @param maksCekanje 				maksimalno dozvoljeno cekanje na odgovor.
+	 * @param serverAerodromaAdresa 	adresa servera aerodroma.
+	 * @param serverAerodromaPort 		port servera aerodroma.
+	 */
 	public ServerUdaljenosti(int port, int maksCekaca, int maksCekanje, String serverAerodromaAdresa,
 			int serverAerodromaPort) {
 		super();
@@ -93,22 +123,29 @@ public class ServerUdaljenosti {
 		this.aeroPodaci = new ArrayList<Aerodrom>();
 	}
 
+	/**
+	 * Ucitaj konfiguraciju.
+	 *
+	 * @param nazivDatoteke naziv datoteke
+	 * @return true, ako je uspješno
+	 */
 	private static boolean ucitajKonfiguraciju(String nazivDatoteke) {
 		try {
 			konfig = KonfiguracijaApstraktna.preuzmiKonfiguraciju(nazivDatoteke);
 		} catch (NeispravnaKonfiguracija e) {
-			// TODO Javi nešto pametno
-			System.out.println("Došlo je do pogreške prilikom učitavanja konfiguracije!");
+			System.out.println("ERROR 39 Došlo je do pogreške prilikom učitavanja konfiguracije!");
 			e.printStackTrace();
 			return false;
 		}
 		return true;
 	}
 
+	/**
+	 * Obrada zahtjeva.
+	 */
 	public void obradaZahtjeva() {
 		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca)) {
 			while (true) {
-				System.out.println("Čekam korisnika!"); // TODO kasnije obrisati
 				this.veza = ss.accept();
 //				TODO: check function of timeout
 				this.veza.setSoTimeout(maksCekanje);
@@ -122,6 +159,12 @@ public class ServerUdaljenosti {
 
 	}
 
+	/**
+	 * Obradi naredbu je metoda koja se koristi za oredivanje koja ce se metoda dalje koristiti u izvrsavanju programa.
+	 *
+	 * @param zahtjev 	zahtjev.
+	 * @return 			string.
+	 */
 	private String obradiNaredbu(String zahtjev) {
 		Pattern pDist = Pattern.compile("^DISTANCE ([A-Z]{4}) ([A-Z]{4})$"),
 				pDistClear = Pattern.compile("^DISTANCE CLEAR$");
@@ -133,12 +176,18 @@ public class ServerUdaljenosti {
 		if (mDist.matches()) {
 			odgovor = izvrsiNaredbuDist(zahtjev);
 		} else if (mDistClear.matches()) {
-			odgovor = izvrsiNaredbuDistClear(zahtjev);
+			odgovor = izvrsiNaredbuDistClear();
 		}
 
 		return odgovor;
 	}
 
+	/**
+	 * Izvrsi naredbu dist.
+	 *
+	 * @param zahtjev 	zahtjev.
+	 * @return  		string.
+	 */
 	private String izvrsiNaredbuDist(String zahtjev) {
 		String[] podaci = zahtjev.split(" ");
 		String icao1 = podaci[1], icao2 = podaci[2];
@@ -153,28 +202,28 @@ public class ServerUdaljenosti {
 		}
 		if (aero1 == null) {
 			String odgovor = dohvatiAerodrom(icao1);
-			if (odgovor == null)
+			if (odgovor.contains("ERROR 32"))
+				return odgovor;
+			else if (odgovor.contains("ERROR 21"))
 				popisRezultata.concat("ERROR 31 Aerodrom \'" + icao1 + "\' ne postoji!");
-			else
-			{
+			else {
 				aero1 = stringUAerodrom(odgovor);
-				if(!aeroPodaci.contains(aero1))
-				{
+				if (!aeroPodaci.contains(aero1)) {
 					aeroPodaci.add(aero1);
 				}
 			}
 		}
 		if (aero2 == null) {
 			String odgovor = dohvatiAerodrom(icao2);
-			if (odgovor == null && popisRezultata.length() <= 0)
-				popisRezultata="ERROR 31 Aerodrom \'" + icao2 + "\' ne postoji";
-			else if (odgovor == null)
+			if (odgovor.contains("ERROR 32"))
+				return odgovor;
+			else if (odgovor.contains("ERROR 21") && popisRezultata.length() <= 0)
+				popisRezultata = "ERROR 31 Aerodrom \'" + icao2 + "\' ne postoji";
+			else if (odgovor.contains("ERROR 21"))
 				popisRezultata = ("ERROR 31 Aerodromi \'" + icao1 + "\' i \'" + icao2 + "\' ne postoje!");
-			else
-			{
+			else {
 				aero2 = stringUAerodrom(odgovor);
-				if(!aeroPodaci.contains(aero2))
-				{
+				if (!aeroPodaci.contains(aero2)) {
 					aeroPodaci.add(aero2);
 				}
 			}
@@ -186,28 +235,36 @@ public class ServerUdaljenosti {
 		return popisRezultata;
 	}
 
+	/**
+	 * Dohvati aerodrom dohvaca aerodrom sa servera aerodroma {@see ServerAerodroma}.
+	 *
+	 * @param icao 	icao.
+	 * @return 		string.
+	 */
 	private String dohvatiAerodrom(String icao) {
-		Pattern pOk = Pattern.compile("^OK ([A-Z]{4}) (\".+\") (\\d{1,4}\\.\\d{1,4}) (\\d{1,6}\\.\\d{1,30});$"),
-				pError21 = Pattern.compile("^ERROR 21 Aerodrom '([A-Z]{4})' ne postoji!$");
-//		FIXAT REGEX JER NE PODRZAVA ž
 		String komanda = "AIRPORT " + icao;
 		String odgovor = posaljiKomandu(serverAerodromaAdresa, serverAerodromaPort, komanda);
-		System.out.println("DOHVATI AERO: "+odgovor);
-//		Matcher mOk = pOk.matcher(odgovor);
-
-		if (odgovor!=null && odgovor.contains("OK")) {
-			return odgovor;
-		}
-		return null;
+		return odgovor;
 	}
 
+	/**
+	 * Metoda pretvara string u objekt tipa {@see Aerodrom}
+	 *
+	 * @param odgovor 	string koji sadrzi podatke o aerodromu.
+	 * @return 			{@see Aerodrom}.
+	 */
 	private Aerodrom stringUAerodrom(String odgovor) {
 		String[] podaci = odgovor.split("\""), statusNaziv = podaci[0].split(" "), koordinate = podaci[2].split(" ");
 		String naziv = podaci[1];
 		return new Aerodrom(statusNaziv[1], naziv, koordinate[1], koordinate[2].replace(";", ""));
 	}
 
-	private String izvrsiNaredbuDistClear(String zahtjev) {
+	/**
+	 * Izvrsi naredbu dist clear je metoda koja cisti {@see #aeroPodaci}
+	 *
+	 * @return the 		string.
+	 */
+	private String izvrsiNaredbuDistClear() {
 		String popisRezultata = "OK";
 		aeroPodaci.clear();
 		if (aeroPodaci.size() > 0)
@@ -216,48 +273,72 @@ public class ServerUdaljenosti {
 		return popisRezultata;
 	}
 
+	/**
+	 * Konfiguracija sadrzi je metoda koja provjerava sadri li konfiguracija odredeni parametar.
+	 *
+	 * @param kljuc 	je ime parametra.
+	 * @return true, 	ako konfiguracija sadrzi parametar.
+	 */
 	private static boolean konfiguracijaSadrzi(String kljuc) {
 		if (konfig.dajPostavku(kljuc) == null || konfig.dajPostavku(kljuc).isEmpty()) {
-			System.out.println("ERROR 29 " + kljuc + " nije definiran u konfiguraciji!");
+			System.out.println("ERROR 39 " + kljuc + " nije definiran u konfiguraciji!");
 			return false;
 		}
 		return true;
 
 	}
 
+	/**
+	 * Port slobodan je metoda koja provjerava je li odredeni port slobodan.
+	 *
+	 * @param port 		broj porta.
+	 * @return true, 	ako je slobodan.
+	 */
 	private static boolean portSlobodan(int port) {
 		ServerSocket skt;
 		try {
 			skt = new ServerSocket(port);
 			skt.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-//			e.printStackTrace();
-			System.out.println("ERROR 29 Port se vec koristi!");
+			System.out.println("ERROR 39 Port se vec koristi!");
 			return false;
 		}
 		return true;
 
 	}
 
+	/**
+	 * Klasa DretvaObrade koja se koristi za ostvarivanje visedretvenog rada.
+	 */
 	public class DretvaObrade extends Thread {
+		
+		/** The veza. */
 		private Socket veza = null;
 
+		/**
+		 * Instantiates a new dretva obrade.
+		 *
+		 * @param veza the veza
+		 */
 		public DretvaObrade(Socket veza) {
 			super();
 			this.veza = veza;
 		}
 
+		/**
+		 * Start.
+		 */
 		@Override
 		public synchronized void start() {
 			super.start();
 		}
 
+		/**
+		 * Run.
+		 */
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
 			super.run();
-			System.out.println("Dretva: " + this.getId());
 			try (InputStreamReader isr = new InputStreamReader(this.veza.getInputStream(), Charset.forName("UTF-8"));
 					OutputStreamWriter osw = new OutputStreamWriter(this.veza.getOutputStream(),
 							Charset.forName("UTF-8"));) {
@@ -271,11 +352,9 @@ public class ServerUdaljenosti {
 					tekst.append((char) i);
 				}
 
-				System.out.println(tekst.toString()); // TODO kasnije obrisati
 //				this.veza.shutdownInput();
 
 				String odgovor = obradiNaredbu(tekst.toString());
-//				Thread.sleep(10000);
 				osw.write(odgovor);
 				osw.flush();
 //				this.veza.shutdownOutput();
@@ -284,19 +363,30 @@ public class ServerUdaljenosti {
 			}
 		}
 
+		/**
+		 * Interrupt.
+		 */
 		@Override
 		public void interrupt() {
-			// TODO Auto-generated method stub
 			super.interrupt();
 		}
 
 	}
 
+	/**
+	 * Udaljenost dvije tocke na sferi.
+	 *
+	 * @param icao1 the icao 1
+	 * @param icao2 the icao 2
+	 * @return the double
+	 */
 	static double udaljenostDvijeTockeNaSferi(Aerodrom icao1, Aerodrom icao2) {
 // distance between latitudes and longitudes
-		
-		double dLat = Math.toRadians(Double.parseDouble(icao2.gpsGS.replace(",", ".")) - Double.parseDouble(icao1.gpsGS.replace(",", ".")));
-		double dLon = Math.toRadians(Double.parseDouble(icao2.gpsGD.replace(",", ".")) - Double.parseDouble(icao1.gpsGD.replace(",", ".")));
+
+		double dLat = Math.toRadians(
+				Double.parseDouble(icao2.gpsGS.replace(",", ".")) - Double.parseDouble(icao1.gpsGS.replace(",", ".")));
+		double dLon = Math.toRadians(
+				Double.parseDouble(icao2.gpsGD.replace(",", ".")) - Double.parseDouble(icao1.gpsGD.replace(",", ".")));
 
 // convert to radians
 		double gs1 = Math.toRadians(Double.parseDouble(icao1.gpsGS.replace(",", ".")));
@@ -306,11 +396,17 @@ public class ServerUdaljenosti {
 		double a = Math.pow(Math.sin(dLat / 2), 2) + Math.pow(Math.sin(dLon / 2), 2) * Math.cos(gs1) * Math.cos(gs2);
 		double radiusZemlje = 6371;
 		double c = 2 * Math.asin(Math.sqrt(a));
-		System.out.println("rez: "+radiusZemlje * c);
-		System.out.println(zaokruzi(radiusZemlje * c));
 		return zaokruzi(radiusZemlje * c);
 	}
 
+	/**
+	 * Posalji komandu.
+	 *
+	 * @param adresa the adresa
+	 * @param port the port
+	 * @param komanda the komanda
+	 * @return the string
+	 */
 	public String posaljiKomandu(String adresa, int port, String komanda) {
 		try (Socket veza = new Socket(adresa, port);
 				InputStreamReader isr = new InputStreamReader(veza.getInputStream(), Charset.forName("UTF-8"));
@@ -335,17 +431,26 @@ public class ServerUdaljenosti {
 		} catch (IOException ex) {
 			ispis(ex.getMessage());
 		}
-		return null;
+		return "ERROR 32 serverAerodroma ne radi!";
 	}
 
+	/**
+	 * Ispis je metoda koja ispisuje na ekran.
+	 *
+	 * @param message  message.
+	 */
 	private void ispis(String message) {
 		System.out.println(message);
 	}
-	
-	private static double zaokruzi(double broj)
-	{
+
+	/**
+	 * Zaokruzi zaokruzuje broj na jednu decimalu.
+	 *
+	 * @param broj 	broj.
+	 * @return 		double.
+	 */
+	private static double zaokruzi(double broj) {
 		return Math.round(broj);
 	}
-	
 
 }

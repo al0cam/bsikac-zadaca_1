@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest" time="0.08" tests="4" errors="0" skipped="3" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest" time="0.032" tests="4" errors="0" skipped="4" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -7,13 +7,12 @@
     <property name="java.vm.vendor" value="Eclipse Adoptium"/>
     <property name="sun.arch.data.model" value="64"/>
     <property name="java.vendor.url" value="https://adoptium.net/"/>
-    <property name="user.timezone" value="Europe/Zagreb"/>
     <property name="os.name" value="Linux"/>
     <property name="java.vm.specification.version" value="17"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="US"/>
     <property name="sun.boot.library.path" value="/opt/eclipse/eclipse/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.1.v20211116-1657/jre/lib"/>
-    <property name="sun.java.command" value="/home/NWTiS_4/bsikac/bsikac-zadaca_1/bsikac-zadaca_1/bsikac-zadaca_1_app/target/surefire/surefirebooter13238220823811555729.jar /home/NWTiS_4/bsikac/bsikac-zadaca_1/bsikac-zadaca_1/bsikac-zadaca_1_app/target/surefire 2022-03-29T18-18-52_180-jvmRun1 surefire4008276114647837109tmp surefire_015297665018678447920tmp"/>
+    <property name="sun.java.command" value="/home/NWTiS_4/bsikac/bsikac-zadaca_1/bsikac-zadaca_1/bsikac-zadaca_1_app/target/surefire/surefirebooter18018035199532615188.jar /home/NWTiS_4/bsikac/bsikac-zadaca_1/bsikac-zadaca_1/bsikac-zadaca_1_app/target/surefire 2022-04-03T13-07-22_026-jvmRun1 surefire5869395037726520138tmp surefire_05942329110376788165tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="/home/NWTiS_4/bsikac/bsikac-zadaca_1/bsikac-zadaca_1/bsikac-zadaca_1_app/target/test-classes:/home/NWTiS_4/bsikac/bsikac-zadaca_1/bsikac-zadaca_1/bsikac-zadaca_1_app/target/classes:/home/NWTiS_4/.m2/repository/org/foi/nwtis/bsikac/bsikac-zadaca_1_lib/1.0.1/bsikac-zadaca_1_lib-1.0.1.jar:/home/NWTiS_4/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/home/NWTiS_4/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.8.2/junit-jupiter-engine-5.8.2.jar:/home/NWTiS_4/.m2/repository/org/junit/platform/junit-platform-engine/1.8.2/junit-platform-engine-1.8.2.jar:/home/NWTiS_4/.m2/repository/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar:/home/NWTiS_4/.m2/repository/org/junit/platform/junit-platform-commons/1.8.2/junit-platform-commons-1.8.2.jar:/home/NWTiS_4/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.8.2/junit-jupiter-api-5.8.2.jar:/home/NWTiS_4/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/home/NWTiS_4/.m2/repository/org/projectlombok/lombok/1.18.22/lombok-1.18.22.jar:"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -28,7 +27,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="/home/NWTiS_4/bsikac/bsikac-zadaca_1/bsikac-zadaca_1/bsikac-zadaca_1_app/target/surefire/surefirebooter13238220823811555729.jar"/>
+    <property name="surefire.real.class.path" value="/home/NWTiS_4/bsikac/bsikac-zadaca_1/bsikac-zadaca_1/bsikac-zadaca_1_app/target/surefire/surefirebooter18018035199532615188.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="17.0.1+12"/>
     <property name="user.name" value="NWTiS_4"/>
@@ -53,7 +52,9 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="61.0"/>
   </properties>
-  <testcase name="testUcitajKonfiguraciju" classname="org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest" time="0.054"/>
+  <testcase name="testUcitajKonfiguraciju" classname="org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest" time="0">
+    <skipped message="void org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest.testUcitajKonfiguraciju() is @Disabled"/>
+  </testcase>
   <testcase name="testObradaZahtjeva" classname="org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest" time="0">
     <skipped message="void org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest.testObradaZahtjeva() is @Disabled"/>
   </testcase>

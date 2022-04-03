@@ -18,7 +18,6 @@ public class KorisnikGlavni {
 			return;
 		}
 		String kulString = String.join(" ", args);
-		System.out.println(kulString);
 		Pattern pVelikiRegex = Pattern.compile(
 "^-k (?<k>[A-Za-z0-9_-]{3,10}) -l (?<l>[A-Za-z0-9\\_\\-\\#\\!]{3,10}) -s (?<s>(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})|([A-Za-z.]+)) -p (?<p>[8-9]\\d{3}) -t (?<t>\\d+) (?<velikaGrupa>(?<aerodrom>--aerodrom((?<aerodromNull>$)| (?<aeroIcao>[A-Z]{4})($|( --km (?<brojKm>\\d{1,5})$))))|(?<meteo>--meteo (?<meteoIcao>[A-Z]{4})($|(?<meteoIcaoDatum> --datum (?<meteoIcaoDatumDatum>\\d{2}\\.\\d{2}\\.\\d{4}\\.)$)))|(?<temp>--tempOd (?<tempTemp1>-?\\d\\,\\d) --tempDo (?<tempTemp2>-?\\d\\,\\d)($| --datum (?<tempDatumDatum>\\d{2}\\.\\d{2}\\.\\d{4}\\.)$))|(?<serverGlavni>--spremi$|--vrati$|--isprazni$|--statistika$)|(?<udaljenost>--udaljenost (?<udaljenostMetode>--isprazni$|--aerodromOd (?<udaljenostAerodromOd>[A-Z]{4}) --aerodromDo (?<udaljenostAerodromDo>[A-Z]{4})$)))"
 				);
@@ -29,7 +28,6 @@ public class KorisnikGlavni {
 			
 			String[] velikaGrupa = mVelikiRegex.group("velikaGrupa").split(" ");
 			String komanda = dajKomandu(velikaGrupa[0], mVelikiRegex);
-			System.out.println(komanda);
 			String odgovor = korisnik.posaljiKomandu(mVelikiRegex.group("s"), Integer.parseInt(mVelikiRegex.group("p")),
 					mVelikiRegex.group("t"), mVelikiRegex.group("k"), mVelikiRegex.group("l"),
 					komanda);
@@ -63,14 +61,14 @@ public class KorisnikGlavni {
 			}
 		}
 		case "--meteo":{
-			if(velikiRegex.group("meteoIcao") != null)
-			{
-				return "METEO "+velikiRegex.group("meteoIcao");
-			}else if(velikiRegex.group("meteoIcaoDatumDatum") != null)
+			if(velikiRegex.group("meteoIcaoDatumDatum") != null)
 			{
 				String[] datum = velikiRegex.group("meteoIcaoDatumDatum").split("\\.");
 				String datumFormatirano = datum[2]+"-"+datum[1]+"-"+datum[0];
- 				return "METEO "+velikiRegex.group("aeroIcao")+" "+datumFormatirano;
+ 				return "METEO "+velikiRegex.group("meteoIcao")+" "+datumFormatirano;
+			}else if(velikiRegex.group("meteoIcao") != null)
+			{
+				return "METEO "+velikiRegex.group("meteoIcao");
 			}
 		}
 		case "--tempOd":{
@@ -115,7 +113,6 @@ public class KorisnikGlavni {
 	public String posaljiKomandu(String adresa, int port, String t, String k, String l, String komanda) {
 		String auth = "USER "+k+" PASSWORD "+l+" ";
 		String novaKomanda = auth+(komanda);
-		System.out.println(novaKomanda);
 		try (Socket veza = new Socket(adresa, port);
 				InputStreamReader isr = new InputStreamReader(veza.getInputStream(), Charset.forName("UTF-8"));
 				OutputStreamWriter osw = new OutputStreamWriter(veza.getOutputStream(), Charset.forName("UTF-8"));) {

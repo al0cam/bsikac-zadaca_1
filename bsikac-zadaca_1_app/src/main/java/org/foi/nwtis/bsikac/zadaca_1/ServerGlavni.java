@@ -23,7 +23,6 @@ import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.Konfiguracija;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.KonfiguracijaApstraktna;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.NeispravnaKonfiguracija;
 
-// TODO: Auto-generated Javadoc
 /**
  * Glavna klasa poslužitelja.
  */
@@ -34,14 +33,35 @@ public class ServerGlavni {
 
 	/** Maksimalni broj cekaca. */
 	public int maksCekaca = -1;
+	
+	/** Maksimalno cekanje na odgovor od servera. */
 	public int maksCekanje = 0;
+	
+	/** Adresa servera udaljenosti. */
 	public String serverUdaljenostiAdresa = "";
+	
+	/** Port servera udaljenosti. */
 	public int serverUdaljenostiPort = 0;
+	
+	/** Adresa servera aerodroma. */
 	public String serverAerodromaAdresa = "";
+	
+	/** Port servera aerodroma. */
 	public int serverAerodromaPort = 0;
+	
+	/** Adresa servera meteo. */
 	public String serverMeteoAdresa = "";
+	
+	/** Port servera meteo. */
 	public int serverMeteoPort = 0;
+	
+	/** Naziv datoteke meduspremnika. */
+	public String datotekaMeduspremnik;
+	
+	/** Meduspremnik. */
 	public volatile Meduspremnik meduspremnik;
+	
+	/** Brojac dretvi. */
 	private int brojacDretvi = 0;
 
 	/** Veza na mrežnu utičnicu. */
@@ -81,7 +101,7 @@ public class ServerGlavni {
 	 */
 	public static void main(String[] args) {
 		if (args.length != 1) {
-			System.out.println("Parametar mora biti naziv konfiguracijske datoteke!");
+			System.out.println("ERROR 49 Parametar mora biti naziv konfiguracijske datoteke!");
 			return;
 		}
 
@@ -109,7 +129,6 @@ public class ServerGlavni {
 			return;
 		if (!konfiguracijaSadrzi("server.meteo.adresa"))
 			return;
-		// TODO provjeri jesu li sve postavke koje trebaju biti
 
 		int port = Integer.parseInt(konfig.dajPostavku("port"));
 		if (port < 8000 || port > 9999) {
@@ -121,6 +140,7 @@ public class ServerGlavni {
 
 		int maksCekaca = Integer.parseInt(konfig.dajPostavku("maks.cekaca"));
 		String nazivDatotekeKorisnika = konfig.dajPostavku("datoteka.korisnika");
+		String nazivDatotekeMeduspremnika= konfig.dajPostavku("datoteka.meduspremnik");
 		int maksCekanje = Integer.parseInt(konfig.dajPostavku("maks.cekanje"));
 		String serverUdaljenostiAdresa = konfig.dajPostavku("server.udaljenosti.adresa");
 		int serverUdaljenostiPort = Integer.parseInt(konfig.dajPostavku("server.udaljenosti.port"));
@@ -131,7 +151,7 @@ public class ServerGlavni {
 
 		System.out.println("Server se podiže na portu: " + port);
 
-		ServerGlavni sm = new ServerGlavni(port, maksCekaca, maksCekanje, serverUdaljenostiAdresa,
+		ServerGlavni sm = new ServerGlavni(port, maksCekaca, maksCekanje, nazivDatotekeMeduspremnika, serverUdaljenostiAdresa,
 				serverUdaljenostiPort, serverAerodromaAdresa, serverAerodromaPort, serverMeteoAdresa, serverMeteoPort);
 		sm.ucitajKorisnike(nazivDatotekeKorisnika);
 		sm.obradaZahtjeva();
@@ -140,7 +160,7 @@ public class ServerGlavni {
 	/**
 	 * Konstruktor glavne klase.
 	 *
-	 * @param port       broj porta
+	 * @param port       broj porta.
 	 * @param maksCekaca maksimalni broj cekaca.
 	 */
 	public ServerGlavni(int port, int maksCekaca) {
@@ -148,7 +168,21 @@ public class ServerGlavni {
 		this.maksCekaca = maksCekaca;
 	}
 
-	public ServerGlavni(int port, int maksCekaca, int maksCekanje, String serverUdaljenostiAdresa,
+	/**
+	 * Prosireni konstruktor glavne klase.
+	 *
+	 * @param port 						broj porta.
+	 * @param maksCekaca 				maksimalni broj cekaca.
+	 * @param maksCekanje 				maksimalno dozvoljeno cekanje na odgovor.
+	 * @param datotekaMeduspremnik 		naziv datoteke meduspremnika.
+	 * @param serverUdaljenostiAdresa 	adresa servera udaljenosti.
+	 * @param serverUdaljenostiPort 	port servera udaljenosti.
+	 * @param serverAerodromaAdresa 	adresa servera aerodroma.
+	 * @param serverAerodromaPort 		port servera aerodroma.
+	 * @param serverMeteoAdresa 		adresa servera meteo.
+	 * @param serverMeteoPort 			port serverameteo.
+	 */
+	public ServerGlavni(int port, int maksCekaca, int maksCekanje, String datotekaMeduspremnik, String serverUdaljenostiAdresa,
 			int serverUdaljenostiPort, String serverAerodromaAdresa, int serverAerodromaPort, String serverMeteoAdresa,
 			int serverMeteoPort) {
 		super();
@@ -162,6 +196,7 @@ public class ServerGlavni {
 		this.serverMeteoAdresa = serverMeteoAdresa;
 		this.serverMeteoPort = serverMeteoPort;
 		this.meduspremnik = new Meduspremnik();
+		this.datotekaMeduspremnik = datotekaMeduspremnik;
 	}
 
 	/**
@@ -174,8 +209,7 @@ public class ServerGlavni {
 		try {
 			konfig = KonfiguracijaApstraktna.preuzmiKonfiguraciju(nazivDatoteke);
 		} catch (NeispravnaKonfiguracija e) {
-			// TODO Javi nešto pametno
-			e.printStackTrace();
+//			e.printStackTrace();
 			return false;
 		}
 		return true;
@@ -195,16 +229,13 @@ public class ServerGlavni {
 				String linija = br.readLine();
 				if (linija == null || linija.isEmpty())
 					break;
-				// TODO razmisli o mogućim problemima kod učitavanja
 				String[] p = linija.split(";");
 				Korisnik k = new Korisnik(p[0], p[1], p[2], p[3]);
 				korisnici.add(k);
-				// System.out.println(linija);
 			}
 			System.out.println("Učitano " + korisnici.size() + " korisnika!");
 		} catch (IOException | NumberFormatException e) {
-			// TODO Napiši nešto pametno
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 
@@ -214,7 +245,6 @@ public class ServerGlavni {
 	public void obradaZahtjeva() {
 		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca)) {
 			while (true) {
-				System.out.println("Čekam korisnika!"); // TODO kasnije obrisati
 				this.veza = ss.accept();
 				DretvaZahtjeva dretvaZahtjeva = new DretvaZahtjeva(veza, konfig, brojacDretvi);
 
@@ -229,7 +259,13 @@ public class ServerGlavni {
 
 	}
 
-	private static boolean konfiguracijaSadrzi(String kljuc) {
+	/**
+	 * Konfiguracija sadrzi je metoda koja provjerava sadri li konfiguracija odredeni parametar.
+	 *
+	 * @param kljuc 	je ime parametra.
+	 * @return true, 	ako konfiguracija sadrzi parametar.
+	 */
+	public static boolean konfiguracijaSadrzi(String kljuc) {
 		if (konfig.dajPostavku(kljuc) == null || konfig.dajPostavku(kljuc).isEmpty()) {
 			System.out.println("ERROR 49 " + kljuc + " nije definiran u konfiguraciji!");
 			return false;
@@ -238,7 +274,13 @@ public class ServerGlavni {
 
 	}
 
-	private static boolean portSlobodan(int port) {
+	/**
+	 * Port slobodan je metoda koja provjerava je li odredeni port slobodan.
+	 *
+	 * @param port 		broj porta.
+	 * @return true, 	ako je slobodan.
+	 */
+	public static boolean portSlobodan(int port) {
 		ServerSocket skt;
 		try {
 			skt = new ServerSocket(port);

@@ -25,6 +25,7 @@ import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.Konfiguracija;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.KonfiguracijaApstraktna;
 import org.foi.nwtis.bsikac.vjezba_03.konfiguracije.NeispravnaKonfiguracija;
 
+
 public class ServerAerodroma {
 	private int port = 0;
 	private int maksCekaca = -1;
@@ -42,7 +43,7 @@ public class ServerAerodroma {
 
 	public static void main(String[] args) {
 		if (args.length != 1) {
-			System.out.println("Parametar mora biti naziv konfiguracijske datoteke!");
+			System.out.println("ERROR 29 Parametar mora biti naziv konfiguracijske datoteke!");
 			return;
 		}
 
@@ -65,7 +66,7 @@ public class ServerAerodroma {
 
 		int port = Integer.parseInt(konfig.dajPostavku("port"));
 		if (port < 8000 || port > 9999) {
-			System.out.println("Port: " + port + " nije u dozvoljenom rasponu(8000-9999)");
+			System.out.println("ERROR 29 Port: " + port + " nije u dozvoljenom rasponu(8000-9999)");
 			return;
 		}
 		if (!portSlobodan(port))
@@ -73,7 +74,6 @@ public class ServerAerodroma {
 
 		int maksCekaca = Integer.parseInt(konfig.dajPostavku("maks.cekaca"));
 		String nazivDatotekeAeroPodataka = konfig.dajPostavku("datoteka.aerodroma");
-		System.out.println(nazivDatotekeAeroPodataka);
 		int maksCekanje = Integer.parseInt(konfig.dajPostavku("maks.cekanje"));
 		String serverUdaljenostiAdresa = konfig.dajPostavku("server.udaljenosti.adresa");
 		int serverUdaljenostiPort = Integer.parseInt(konfig.dajPostavku("server.udaljenosti.port"));
@@ -102,8 +102,7 @@ public class ServerAerodroma {
 		try {
 			konfig = KonfiguracijaApstraktna.preuzmiKonfiguraciju(nazivDatoteke);
 		} catch (NeispravnaKonfiguracija e) {
-			// TODO Javi nešto pametno
-			System.out.println("Došlo je do pogreške prilikom učitavanja konfiguracije!");
+			System.out.println("ERROR 29 Došlo je do pogreške prilikom učitavanja konfiguracije!");
 			e.printStackTrace();
 			return false;
 		}
@@ -123,7 +122,6 @@ public class ServerAerodroma {
 				String[] p = linija.split(";");
 				Aerodrom a = new Aerodrom(p[0], p[1], p[2], p[3]);
 				aeroPodaci.add(a);
-				// System.out.println(linija);
 			}
 			System.out.println("Učitano " + aeroPodaci.size() + " meteo podataka!");
 			br.close();
@@ -142,7 +140,6 @@ public class ServerAerodroma {
 	public void obradaZahtjeva() {
 		try (ServerSocket ss = new ServerSocket(this.port, this.maksCekaca)) {
 			while (true) {
-				System.out.println("Čekam korisnika!"); // TODO kasnije obrisati
 				this.veza = ss.accept();
 //				TODO: check function of timeout
 				this.veza.setSoTimeout(maksCekanje);
@@ -231,7 +228,7 @@ public class ServerAerodroma {
 		String[] podaci = zahtjev.split(" ");
 		String icao = podaci[1];
 		Double brojKm = Double.parseDouble(podaci[2]);
-		String popisRezultata = "OK ";
+		String popisRezultata = "OK";
 		if (meduspremnik.containsKey(zahtjev))
 			popisRezultata = meduspremnik.get(zahtjev);
 		else {
@@ -241,6 +238,8 @@ public class ServerAerodroma {
 						if (!a2.equals(a)) {
 							String komanda = "DISTANCE " + a.icao + " " + a2.icao;
 							String odgovor = posaljiKomandu(serverUdaljenostiAdresa, serverUdaljenostiPort, komanda);
+							if(odgovor.contains("ERROR 22"))
+								return odgovor;
 							String[] dijeloviOdgovora = odgovor.split(" ");
 							if (dijeloviOdgovora[0].contentEquals("OK")) {
 								if (Double.parseDouble(dijeloviOdgovora[1]) <= brojKm) {
@@ -311,7 +310,6 @@ public class ServerAerodroma {
 					tekst.append((char) i);
 				}
 
-				System.out.println("ZAHTJEV: " + tekst.toString()); // TODO kasnije obrisati
 				this.veza.shutdownInput();
 
 				String odgovor = obradiNaredbu(tekst.toString());
@@ -354,7 +352,7 @@ public class ServerAerodroma {
 		} catch (IOException ex) {
 			ispis(ex.getMessage());
 		}
-		return null;
+		return "ERROR 22 serverUdaljenosti ne radi";
 	}
 
 	private void ispis(String message) {

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest
 -------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 0.08 s - in org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 4, Time elapsed: 0.032 s - in org.foi.nwtis.bsikac.zadaca_1.ServerGlavniTest
